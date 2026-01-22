@@ -295,8 +295,8 @@ export async function searchUsersForMessage(query: string) {
 
     const searchCondition = query ? {
         OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { email: { contains: query, mode: 'insensitive' } }
+            { name: { contains: query, mode: 'insensitive' as const } },
+            { email: { contains: query, mode: 'insensitive' as const } }
         ]
     } : {};
 

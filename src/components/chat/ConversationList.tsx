@@ -24,7 +24,7 @@ export function ConversationList({ conversations, selectedId, onSelect, onDelete
     return (
         <div className="flex-1 overflow-y-auto">
             {conversations.map((conv) => {
-                const participant = conv.participant || conv.otherParticipant;
+                const participant = conv.participant;
                 const isSelected = selectedId === conv.id;
                 
                 return (

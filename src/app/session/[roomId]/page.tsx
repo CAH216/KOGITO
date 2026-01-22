@@ -18,7 +18,7 @@ export default async function SessionPage(props: PageProps) {
     const session = await prisma.learningSession.findUnique({
         where: { id: roomId },
         include: { 
-            student: true,
+            student: { include: { parent: true } },
             tutor: { include: { user: true } }
         }
     });

@@ -151,3 +151,27 @@ export async function confirmSession(sessionId: string) {
     return { success: true };
 }
 
+export async function declineSession(sessionId: string) {
+    const sessionHelper = await getServerSession(authOptions);
+    if (!sessionHelper?.user?.id) return { error: "Unauthorized" };
+
+    const session = await prisma.learningSession.findUnique({
+        where: { id: sessionId }
+    });
+
+    if (!session) return { error: "Session non trouvée" };
+    if (session.status !== 'REQUESTED') return { error: "Session déjà traitée" };
+
+    // Update to CANCELLED
+    await prisma.learningSession.update({
+        where: { id: sessionId },
+        data: {
+            status: 'CANCELLED'
+        }
+    });
+
+    await logSystemEvent('SESSION_DECLINED', `Session ${sessionId} declined by tutor.`, LogLevel.INFO);
+
+    revalidatePath('/tutor/dashboard');
+    return { success: true };
+}
