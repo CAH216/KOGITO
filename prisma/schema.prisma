@@ -1,0 +1,474 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums for Roles and Status
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+  PARENT
+  TUTOR
+  SCHOOL_ADMIN
+}
+
+enum TutorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SessionStatus {
+  REQUESTED
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum LogLevel {
+  INFO
+  WARNING
+  ERROR
+  SECURITY
+}
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     LogLevel @default(INFO)
+  action    String   // e.g., "TUTOR_REGISTER", "LOGIN_FAILED"
+  message   String
+  metadata  Json?    // Store extra details like IP, User Agent, Diff
+  userId    String?  // Optional relation to User
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  subject     String
+  description String   @db.Text
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  
+  userId      String
+  user        User     @relation("UserTickets", fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Main User Model (Authentication)
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Hashed password if using credentials
+  role          UserRole  @default(PARENT)
+  
+  accounts      Account[]
+  sessions      Session[]
+  logs          SystemLog[] // Reverse relation
+  notifications ParentNotification[] 
+  
+  // Messaging
+  conversations Conversation[]
+  sentMessages  DirectMessage[] @relation("SentMessages")
+  tickets       SupportTicket[] @relation("UserTickets")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships based on Role
+  parentProfile ParentProfile?
+  tutorProfile  TutorProfile?
+  
+  // Admin/Employee fields
+  managedBy     String?   // ID of the Admin who added this Employee
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Profile for Parents
+model ParentProfile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  phoneNumber    String?
+  address        String?
+  stripeCustomerId String? // For payments
+  subscriptionStatus String? // ACTIVE, INACTIVE, TRIAL
+  hoursBalance     Float     @default(0.0) // Available hours for tutoring
+  
+  children       Student[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+}
+
+// Profile for Tutors
+model TutorProfile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  bio            String?   @db.Text
+  subjects       String[]  // ["Maths", "Physics"]
+  hourlyRate     Float?
+  isVerified     Boolean   @default(false)
+  status         TutorStatus @default(PENDING)
+  experience     String?
+  cvUrl          String?
+  interviewDate  DateTime? // Proposed date for interview
+  rating         Float     @default(0.0)
+  totalReviews   Int       @default(0)
+  
+  sessions       LearningSession[]
+  availability   Availability[]
+  homeworksGiven Homework[]
+
+  schoolId       String?
+  school         School?   @relation(fields: [schoolId], references: [id])
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+}
+
+// Student Model (Child)
+model Student {
+  id             String    @id @default(cuid())
+  name           String
+  grade          String?   // Classe (6�me, 3�me...)
+  schoolId       String?
+  school         School?   @relation(fields: [schoolId], references: [id])
+  
+  parentId       String
+  parent         ParentProfile @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  
+  // Dedicated interactions
+  sessions       LearningSession[]
+  chats          AiChat[]
+  homeworks      Homework[]
+  
+  // Kogito Brain
+  kogitoProfile  KogitoStudentProfile?
+
+  createdAt      DateTime  @default(now())
+}
+
+model Homework {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?  @db.Text
+  subject     String
+  dueDate     DateTime?
+  isCompleted Boolean  @default(false)
+  
+  // New Fields for Assignation Source
+  source      String   @default("TUTOR") // "TUTOR", "AI"
+  tutorId     String?
+  tutor       TutorProfile? @relation(fields: [tutorId], references: [id])
+  
+  // Interactive Content
+  status      String   @default("PENDING") // PENDING, SUBMITTED, CORRECTED
+  content     Json?    // AI/Tutor questions structure: { questions: [{id, type, question, options?}] }
+  answers     Json?    // Student answers
+  correction  Json?    // Correction data
+  score       Int?     // 0-100
+
+  createdAt   DateTime @default(now())
+}
+
+// Learning Session (Human Tutor)
+model LearningSession {
+  id             String        @id @default(cuid())
+  studentId      String
+  student        Student       @relation(fields: [studentId], references: [id])
+  
+  tutorId        String
+  tutor          TutorProfile  @relation(fields: [tutorId], references: [id])
+  
+  subject        String
+  startTime      DateTime
+  endTime        DateTime?
+  status         SessionStatus @default(SCHEDULED)
+  meetingUrl     String?       // Link to video room
+  
+  price          Float?
+  notes          String?       @db.Text
+  
+  createdAt      DateTime      @default(now())
+}
+
+// AI Chat History
+model AiChat {
+  id             String    @id @default(cuid())
+  studentId      String
+  student        Student   @relation(fields: [studentId], references: [id])
+  
+  subject        String?
+  title          String?
+  messages       Json?     // Storing conversation history
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// Simple Availability for Tutors
+model Availability {
+  id             String       @id @default(cuid())
+  tutorId        String
+  tutor          TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  
+  dayOfWeek      Int          // 0 = Sunday, 1 = Monday...
+  startTime      String       // "09:00"
+  endTime        String       // "17:00"
+}
+
+// School Partnership Model
+model School {
+  id           String    @id @default(cuid())
+  name         String
+  code         String    @unique // Code Partenaire (ex: KOGITO-LMB-01)
+  address      String?
+  city         String?
+  contactEmail String?
+  phoneNumber  String?
+  
+  students     Student[]
+  tutors       TutorProfile[]
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+
+// --- KOGITO PEDAGOGICAL ENGINE ---
+
+model KogitoStudentProfile {
+  id            String   @id @default(cuid())
+  studentId     String   @unique
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  learningStyle String?  // e.g. 'Visual', 'Verbal'
+  strengths     Json?    // e.g. ['Geometry', 'Logic']
+  weaknesses    Json?    // e.g. ['Calculus', 'Focus']
+  interests     Json?    // e.g. ['Football', 'Minecraft', 'Drawing']
+  badges        Json?    // Gamification badges ({ 'PERSEVERANT': true })
+  
+  xp            Int      @default(0)
+  level         Int      @default(1)
+
+  onboardingDone Boolean  @default(false)
+  
+  sessions      KogitoSession[]
+  mastery       KogitoConceptMastery[]
+  memories      KogitoMemory[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model KogitoSession {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  studentProfile   KogitoStudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  subject          String
+  topic            String?
+  startedAt        DateTime @default(now())
+  endedAt          DateTime?
+  mode             String   @default("STANDARD") // STANDARD, CONFIDENCE, EXAM
+  
+  // The 'Stage' representation for parents (generated by AI)
+  parentSummary    String?  @db.Text 
+  
+  // Mur des Fiertés (Push mechanism)
+  isSharedWithParent Boolean @default(false)
+  sharedAt           DateTime?
+
+  messages         KogitoMessage[]
+}
+
+model KogitoMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   KogitoSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  role      String   // 'user', 'assistant', 'system'
+  content   String   @db.Text
+  
+  // Pedagogical Metadata (The Brain)
+  step      String?  // UNDERSTANDING, HYPOTHESIS, REASONING, JUSTIFICATION, RETRY
+  sentiment String?  // FRUSTRATED, CONFIDENT, CURIOUS
+  strategy  String?  // STORYTELLING, PROJECTION, SOCRATIC
+  
+  metadata  Json?    // For Whiteboard, Code Execution results, etc.
+  
+  isPrivate Boolean  @default(false) // If true, hidden from 'Backstage' logs if we were to show logs
+
+  createdAt DateTime @default(now())
+}
+
+model KogitoConceptMastery {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  studentProfile   KogitoStudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  
+  // Connection to the Knowledge Graph
+  conceptId        String?
+  conceptNode      ConceptNode? @relation(fields: [conceptId], references: [id])
+  
+  // Fallback for unstructured learning (Chat topics not yet mapped)
+  conceptSlug      String?   // e.g. 'Linear Equations' (renamed from 'concept')
+  
+  level            Int      @default(0) // 0-100 (0=Locked/New, 100=Mastered)
+  status           String   @default("LOCKED") // LOCKED, UNLOCKED, IN_PROGRESS, MASTERED
+  
+  lastPracticed    DateTime @default(now())
+  
+  @@unique([studentProfileId, conceptId])
+}
+
+// --- KNOWLEDGE GRAPH (The Galaxy) ---
+
+model ConceptNode {
+  id          String   @id @default(cuid())
+  slug        String   @unique // e.g. 'maths-pythagore'
+  name        String
+  description String?  @db.Text
+  subject     String   // 'MATHS', 'PHYSICS', 'FRENCH'
+  
+  // Visualization Coordinates (Generic 2D Layout)
+  x           Float    @default(0)
+  y           Float    @default(0)
+  radius      Float    @default(10)
+  color       String   @default("#3b82f6") // Blue-500
+
+  // Graph Structure
+  outgoingEdges ConceptEdge[] @relation("SourceNode")
+  incomingEdges ConceptEdge[] @relation("TargetNode")
+  
+  // Student Progress
+  studentMastery KogitoConceptMastery[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ConceptEdge {
+  id        String       @id @default(cuid())
+  sourceId  String
+  source    ConceptNode  @relation("SourceNode", fields: [sourceId], references: [id], onDelete: Cascade)
+  
+  targetId  String
+  target    ConceptNode  @relation("TargetNode", fields: [targetId], references: [id], onDelete: Cascade)
+  
+  type      String       @default("PREREQUISITE") // PREREQUISITE, RELATED
+  weight    Float        @default(1.0)
+  
+  @@unique([sourceId, targetId])
+}
+
+
+model KogitoMemory {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  studentProfile   KogitoStudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  
+  key              String   // e.g. "analogy_minecraft", "struggle_fractions"
+  value            String   @db.Text // e.g. "Understand geometry better with Minecraft block analogies"
+  type             String   @default("PEDAGOGICAL") // PEDAGOGICAL, PERSONAL, STRATEGIC
+  importance       Int      @default(1) // 1-5
+  
+  createdAt        DateTime @default(now())
+}
+
+model ParentNotification {
+  id        String   @id @default(cuid())
+  userId    String   // The Parent's User ID
+  user      User     @relation(fields: [userId], references: [id])
+  
+  type      String   // 'SESSION_DIGEST', 'ALERT', 'VICTORY'
+  title     String
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  
+  // Metadata for deep linking
+  sessionId String?
+  
+  createdAt DateTime @default(now())
+}
+
+// --- DIRECT MESSAGING SYSTEM ---
+
+model Conversation {
+  id        String   @id @default(cuid())
+  participants User[] 
+  
+  messages  DirectMessage[]
+  
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DirectMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  
+  content        String       @db.Text
+  isRead         Boolean      @default(false)
+  
+  createdAt      DateTime     @default(now())
+}
+
