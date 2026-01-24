@@ -22,9 +22,13 @@ export default function AiHomeworkGenerator({ subjects, sessions }: Props) {
         if (res.success) {
             router.push('/student/homework'); 
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
-        alert("Erreur lors de la génération");
+        if (e.message && e.message.includes("Limite quotidienne")) {
+            alert("⚠️ " + e.message);
+        } else {
+            alert("Erreur lors de la génération.");
+        }
     } finally {
         setLoading(false);
     }

@@ -18,6 +18,11 @@ enum UserRole {
   SCHOOL_ADMIN
 }
 
+enum SubscriptionPlan {
+  FREE
+  PREMIUM
+}
+
 enum TutorStatus {
   PENDING
   APPROVED
@@ -194,6 +199,12 @@ model Student {
   
   // Kogito Brain
   kogitoProfile  KogitoStudentProfile?
+
+  // Usage & Subscription
+  plan           SubscriptionPlan @default(FREE)
+  dailyAiRequests Int             @default(0) // Tracks number of chat messages to Kogito per day
+  dailyHomeworkGen Int            @default(0) // Tracks number of homeworks generated per day
+  lastQuotaReset DateTime         @default(now())
 
   createdAt      DateTime  @default(now())
 }

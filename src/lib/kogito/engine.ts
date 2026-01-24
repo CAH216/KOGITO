@@ -3,6 +3,7 @@ import { generateText, streamText } from 'ai';
 import { prisma } from '@/lib/prisma';
 import { KogitoContext, CognitiveStep, EmotionalState, KogitoStrategy } from './types';
 import { retrieveRelevantMemories, analyzeAndPersistMemories } from './memory';
+import { checkAndIncrementQuota, incrementQuotaUsage } from '@/lib/quota-check';
 
 // The Core Manifesto of Kogito
 const BASE_SYSTEM_PROMPT = `
@@ -113,6 +114,12 @@ export async function processStudentMessage(
 
   if (!session) throw new Error("Session not found");
 
+  // QUOTA CHECK
+  const quota = await checkAndIncrementQuota(session.studentProfile.student.id, 'CHAT');
+  if (!quota.allowed) {
+      throw new Error(quota.message || "Quota exceeded");
+  }
+
   // Retrieve Long Term Memory
   const memories = await retrieveRelevantMemories(session.studentProfile.id);
   const memoryBlock = memories.length > 0 
@@ -201,6 +208,9 @@ export async function processStudentMessage(
   // Cast JSON to string array safely
   const currentBadges = (session.studentProfile.badges as string[]) || [];
   const newBadges = await checkBadges(session.studentProfile.id, currentBadges);
+
+  // INCREMENT QUOTA
+  await incrementQuotaUsage(session.studentProfile.student.id, 'CHAT');
 
   return { message: savedMessage, newBadges };
 }

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,24 +13,108 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
-  Loader2
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Plus
 } from 'lucide-react';
 import { submitTutorApplication } from '@/actions/tutor-actions';
+import { SiteFooter } from "@/components/site/SiteFooter";
+
+// Data structure for the dynamic cycle/subject selection
+const CYCLES_DATA = [
+    {
+        cycle: "Primaire",
+        subjects: [
+            "Mathématiques", "Français (Lecture)", "Français (Écriture)", 
+            "Anglais", "Science et technologie", "Univers social",
+            "Aide aux devoirs"
+        ]
+    },
+    {
+        cycle: "Secondaire 1 & 2",
+        subjects: [
+            "Mathématiques", "Français", "Anglais", 
+            "Géographie", "Histoire et éducation à la citoyenneté",
+            "Science et technologie", "Espagnol"
+        ]
+    },
+    {
+        cycle: "Secondaire 3",
+        subjects: [
+            "Mathématiques", "Français", "Anglais", 
+            "Histoire", "Science et technologie"
+        ]
+    },
+    {
+        cycle: "Secondaire 4",
+        subjects: [
+            "Mathématiques SN (Sciences Naturelles)", "Mathématiques CST", "Mathématiques TS",
+            "Science et technologie", "Science et environnement",
+            "Histoire du Québec et du Canada", "Français"
+        ]
+    },
+    {
+        cycle: "Secondaire 5",
+        subjects: [
+            "Mathématiques SN", "Mathématiques CST", "Mathématiques TS",
+            "Physique", "Chimie", "Français", "Anglais", "Monde contemporain", "Éducation financière"
+        ]
+    },
+    {
+        cycle: "Cégep / Collégial",
+        subjects: [
+            "Calcul Différentiel", "Calcul Intégral", "Algèbre Linéaire",
+            "Physique Mécanique", "Physique Électricité et Magnétisme", "Physique Ondes",
+            "Chimie Générale", "Chimie des Solutions", "Chimie Organique",
+            "Biologie Cellulaire", "Anatomie",
+            "Philosophie", "Littérature"
+        ]
+    },
+    {
+        cycle: "Université",
+        subjects: [
+            "Statistiques", "Microéconomie", "Macroéconomie", "Comptabilité",
+            "Finance", "Droit", "Programmation (Python/Java/C++)"
+        ]
+    }
+];
 
 export default function TutorApplyPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  
+  // State for collapsible sections
+  // Initialize with 'Primaire' open by default
+  const [expandedCycles, setExpandedCycles] = useState<string[]>(['Primaire']);
+
+  // Toggle function for accordion items
+  const toggleCycle = (cycle: string) => {
+      setExpandedCycles(prev => 
+          prev.includes(cycle) 
+              ? prev.filter(c => c !== cycle) 
+              : [...prev, cycle]
+      );
+  };
 
   async function handleSubmit(formData: FormData) {
     setIsSubmitting(true);
     setErrorMessage(null);
 
+    // Verify at least one subject is selected from the complex structure
+    const subjects = formData.getAll('subjects');
+    if (subjects.length === 0) {
+        setErrorMessage("Veuillez sélectionner au moins une matière.");
+        setIsSubmitting(false);
+        return;
+    }
+
     const result = await submitTutorApplication(formData);
 
     if (result.success) {
-       // Show success state instead of redirecting immediately
        setIsSubmitting(false);
        setSuccess(true);
     } else {
@@ -39,12 +123,10 @@ export default function TutorApplyPage() {
     }
   }
 
-  const [success, setSuccess] = useState(false);
-
   if (success) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
-         {/* Navbar simple */}
+         {/* Navbar simple for success state */}
         <nav className="bg-white border-b border-slate-100 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
@@ -145,7 +227,7 @@ export default function TutorApplyPage() {
                            </div>
                            <div>
                                <p className="text-slate-400 text-sm">Gains moyens</p>
-                               <p className="text-2xl font-bold text-white">25€ - 45€ <span className="text-sm font-normal text-slate-400">/ heure</span></p>
+                               <p className="text-2xl font-bold text-white">25$ - 45$ <span className="text-sm font-normal text-slate-400">/ heure</span></p>
                            </div>
                         </div>
                         <div className="space-y-4">
@@ -246,27 +328,58 @@ export default function TutorApplyPage() {
                                 </div>
                             </div>
 
+                            {/* DYNAMIC SUBJECT SELECTION START */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Matières enseignées (Plusieurs choix possibles) <span className="text-red-500">*</span></label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                    {[
-                                        "Mathématiques", "Physique-Chimie", "Anglais", "Français",
-                                        "Histoire-Géo", "SVT", "Informatique", "Philosophie", 
-                                        "Espagnol", "Allemand", "Économie", "Aide aux devoirs"
-                                    ].map((subject) => (
-                                        <label key={subject} className="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none hover:border-blue-400 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all">
-                                            <input 
-                                                type="checkbox" 
-                                                name="subjects" 
-                                                value={subject} 
-                                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-0.5 mr-2"
-                                            />
-                                            <span className="text-sm font-medium text-slate-900">{subject}</span>
-                                        </label>
-                                    ))}
+                                <label className="block text-sm font-medium text-slate-700 mb-4">
+                                    Matières enseignées par cycle <span className="text-red-500">*</span>
+                                </label>
+                                <div className="space-y-4">
+                                    {CYCLES_DATA.map((section) => {
+                                        const isExpanded = expandedCycles.includes(section.cycle);
+                                        return (
+                                            <div key={section.cycle} className={`bg-white rounded-xl border transition-all ${isExpanded ? 'border-blue-300 shadow-sm' : 'border-slate-200'}`}>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => toggleCycle(section.cycle)}
+                                                    className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-blue-50 transition-colors first:rounded-t-xl rounded-b-none"
+                                                >
+                                                    <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                                        <div className={`w-2 h-2 rounded-full ${isExpanded ? 'bg-blue-600' : 'bg-slate-300'}`}></div>
+                                                        {section.cycle}
+                                                        <span className="bg-slate-200 text-slate-600 text-[10px] px-2 py-0.5 rounded-full ml-2">
+                                                            {section.subjects.length} matières
+                                                        </span>
+                                                    </h4>
+                                                    {isExpanded ? <ChevronUp size={18} className="text-slate-500" /> : <ChevronDown size={18} className="text-slate-500" />}
+                                                </button>
+                                                
+                                                {isExpanded && (
+                                                    <div className="p-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                            {section.subjects.map((subject) => (
+                                                                <label key={`${section.cycle}-${subject}`} className="relative flex cursor-pointer rounded-lg border bg-white p-3 shadow-sm focus:outline-none hover:border-blue-400 hover:bg-blue-50/30 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition-all items-start group">
+                                                                    <input 
+                                                                        type="checkbox" 
+                                                                        name="subjects" 
+                                                                        value={`${section.cycle} - ${subject}`} 
+                                                                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 mr-3 flex-shrink-0 cursor-pointer"
+                                                                    />
+                                                                    <span className="text-sm font-medium text-slate-700 group-hover:text-blue-700">{subject}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <p className="mt-2 text-xs text-slate-500">Cochez toutes les matières pour lesquelles vous êtes qualifié(e).</p>
+                                <p className="mt-3 text-xs text-slate-500 flex items-center gap-1">
+                                    <Brain className="w-3 h-3" />
+                                    Sélectionnez les matières pour chaque cycle où vous êtes à l'aise d'enseigner. Vos choix seront enregistrés et affichés sur votre profil.
+                                </p>
                             </div>
+                            {/* DYNAMIC SUBJECT SELECTION END */}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -352,10 +465,8 @@ export default function TutorApplyPage() {
             </div>
         </div>
 
-        <footer className="bg-slate-50 border-t border-slate-200 py-12 text-center text-slate-500 text-sm">
-            &copy; 2026 Kogito Education. Tous droits réservés.
-        </footer>
       </main>
+      <SiteFooter />
     </div>
   );
 }
@@ -369,13 +480,5 @@ function BenefitCard({ icon: Icon, title, description }: { icon: any, title: str
             <h3 className="text-xl font-bold text-slate-900 mb-2">{title}</h3>
             <p className="text-slate-600 leading-relaxed">{description}</p>
         </div>
-    )
-}
-
-function Star({ className }: { className: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-            <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-        </svg>
     )
 }

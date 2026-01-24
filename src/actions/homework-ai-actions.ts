@@ -8,8 +8,10 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { parseAiJson } from '@/lib/utils';
+import { checkAndIncrementQuota, incrementQuotaUsage } from '@/lib/quota-check';
 
 // --- SCHEMAS ---
+
 
 const QuestionSchema = z.object({
   id: z.string(),
@@ -43,6 +45,14 @@ export async function generateAiHomework(formData: FormData) {
     const cookieStore = await cookies();
     const studentId = cookieStore.get('currentStudentId')?.value;
     if (!studentId) throw new Error("Unauthorized");
+
+    // --- QUOTA CHECK ---
+    const quotaCheck = await checkAndIncrementQuota(studentId, 'HOMEWORK');
+    if (!quotaCheck.allowed) {
+         throw new Error(quotaCheck.message || "Quota exceeded");
+    }
+    // await incrementQuotaUsage(studentId, 'HOMEWORK'); // Moved to after success
+    // -------------------
 
     const subject = formData.get('subject') as string;
     const topic = formData.get('topic') as string;
@@ -108,6 +118,8 @@ export async function generateAiHomework(formData: FormData) {
             content: object, 
         }
     });
+
+    await incrementQuotaUsage(studentId, 'HOMEWORK');
 
     revalidatePath('/student/homework');
     return { success: true, homeworkId: homework.id };

@@ -1,22 +1,25 @@
 export const PRICING_CONSTANTS = {
-    CREDIT_VALUE_CAD: 25, // Value of 1 Credit in system currency
-    PLATFORM_FEE_PERCENT: 0.20, // 20% Commission
+    CREDIT_VALUE_CAD: 1, // 1 Credit = 1$ CAD (Aligned with new Billing)
+    PLATFORM_FEE_PERCENT: 0.15, // 15% Platform Fee added on top of Tutor Ask
 };
 
 export function calculateSessionCost(tutorHourlyRate: number | null, durationHours: number = 1): number {
-    if (!tutorHourlyRate) return 1 * durationHours; // Default to 1 credit/hour if no rate set
+    if (!tutorHourlyRate) return 35 * durationHours; // Default safe rate
 
-    // Formula: (TutorRate * (1 + Fee)) / CreditValue
-    // Example: (20 * 1.20) / 25 = 24 / 25 = 0.96 Credits
-    // Example: (25 * 1.20) / 25 = 1.2 Credits
+    // The cost to the parent is TutorRate + PlatformFee
+    // Example: Tutor wants 40$. Fee is 15%.
+    // Cost = 40 * 1.15 = 46 Credits (46$)
     
-    const costInCredits = (tutorHourlyRate * (1 + PRICING_CONSTANTS.PLATFORM_FEE_PERCENT)) / PRICING_CONSTANTS.CREDIT_VALUE_CAD;
+    // We treat hoursBalance as raw Dollars now.
+    const totalRate = tutorHourlyRate * (1 + PRICING_CONSTANTS.PLATFORM_FEE_PERCENT);
     
     // Round to 2 decimals
-    return Math.ceil(costInCredits * durationHours * 100) / 100;
+    return Math.ceil(totalRate * durationHours * 100) / 100;
 }
 
 export function calculateTutorEarnings(tutorHourlyRate: number | null, durationHours: number = 1): number {
-    if (!tutorHourlyRate) return 20 * durationHours; // Default assumption: Tutor gets $20 if unspecified (Consuming 1 credit of $25)
-    return tutorHourlyRate * durationHours;
+    // Tutor gets exactly their hourly rate * duration
+    // The Markup is collected by the platform from the parent
+    const rate = tutorHourlyRate || 25;
+    return Math.floor((rate * durationHours) * 100) / 100;
 }

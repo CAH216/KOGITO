@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { 
@@ -15,6 +15,7 @@ import {
   MessageCircle,
   ChevronDown
 } from "lucide-react";
+import { SiteFooter } from "@/components/site/SiteFooter";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -116,10 +117,20 @@ export default async function Home() {
               </div>
               
               <div className="mt-8 flex items-center gap-4 text-sm text-slate-500">
-                <div className="flex -space-x-2">
-                  {[1,2,3,4].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200" /> 
+                <div className="flex -space-x-3">
+                  {[
+                    "https://randomuser.me/api/portraits/women/68.jpg",
+                    "https://randomuser.me/api/portraits/men/32.jpg",
+                    "https://randomuser.me/api/portraits/women/44.jpg",
+                    "https://randomuser.me/api/portraits/men/86.jpg"
+                  ].map((src, i) => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-white overflow-hidden relative shadow-sm">
+                        <img src={src} alt="Member" className="object-cover w-full h-full" />
+                    </div> 
                   ))}
+                  <div className="w-10 h-10 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-600 shadow-sm">
+                    +1k
+                  </div>
                 </div>
                 <p>Rejoint par +1,000 familles cette semaine</p>
               </div>
@@ -361,55 +372,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 pt-16 pb-8">
-         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-               <div className="col-span-2 md:col-span-1">
-                  <div className="flex items-center gap-2 mb-4">
-                     <Brain className="h-6 w-6 text-blue-600" />
-                     <span className="text-xl font-bold text-slate-900">Kogito</span>
-                  </div>
-                  <p className="text-slate-500 text-sm mb-4">
-                     La plateforme de soutien scolaire nouvelle génération qui réconcilie technologie et pédagogie humaine.
-                  </p>
-                  <div className="flex gap-4">
-                     {/* Social icons placeholders */}
-                     <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-100 hover:text-blue-600 transition-colors">𝕏</div>
-                     <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:bg-blue-100 hover:text-blue-600 transition-colors">In</div>
-                  </div>
-               </div>
-               <div>
-                  <h4 className="font-bold text-slate-900 mb-6">Plateforme</h4>
-                  <ul className="space-y-3 text-sm text-slate-600">
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Comment ça marche</Link></li>
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Nos Tuteurs</Link></li>
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Tarifs</Link></li>
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Pour les Écoles</Link></li>
-                  </ul>
-               </div>
-               <div>
-                  <h4 className="font-bold text-slate-900 mb-6">Support</h4>
-                  <ul className="space-y-3 text-sm text-slate-600">
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Centre d'aide</Link></li>
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Contacter l'équipe</Link></li>
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Signaler un problème</Link></li>
-                  </ul>
-               </div>
-               <div>
-                  <h4 className="font-bold text-slate-900 mb-6">Légal</h4>
-                  <ul className="space-y-3 text-sm text-slate-600">
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Confidentialité</Link></li>
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">CGU</Link></li>
-                     <li><Link href="#" className="hover:text-blue-600 transition-colors">Cookies</Link></li>
-                  </ul>
-               </div>
-            </div>
-            <div className="text-center pt-8 border-t border-slate-100 text-slate-400 text-sm">
-               © 2024 Kogito. Tous droits réservés.
-            </div>
-         </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

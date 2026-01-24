@@ -101,61 +101,94 @@ export async function deleteChild(studentId: string) {
     redirect('/parent/children');
 }
 
+import { stripe } from '@/lib/stripe';
+import { headers } from 'next/headers';
+
 export async function purchaseCredits(packageId: string) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return { error: "Unauthorized" };
-    
-    // Simulate payment logic (In real app, Stripe Session creation here)
-    let hoursToAdd = 0;
-    
-    // Check for existing trial usage if buying trial
-    if (packageId === 'pack_trial') {
-        const existingLog = await prisma.systemLog.findFirst({
-            where: {
-                userId: session.user.id,
-                action: 'PURCHASE_CREDITS',
-                message: { contains: 'pack_trial' }
-            }
-        });
-        if (existingLog) return { error: "Offre d'essai déjà utilisée." };
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+        return { error: "Système de paiement non configuré (Clé manquante)." };
     }
 
+    // Determine Price and Metadata
+    let priceAmount = 0; // In Cents
+    let productName = "";
+    let creditsToAdd = 0;
+    let mode: 'payment' | 'subscription' = 'payment';
+    
+    // Mapping Package to Real Money (CAD)
     switch(packageId) {
-        case 'pack_trial': hoursToAdd = 1; break;
-        case 'pack_5': hoursToAdd = 5; break;
-        case 'pack_10': hoursToAdd = 10; break;
-        case 'pack_20': hoursToAdd = 20; break;
-        default: return { error: "Invalid package" };
+        case 'sub_essential': 
+            priceAmount = 4900; // 49.00$
+            productName = "Abonnement Essentiel (AI + 30$ Credits)";
+            creditsToAdd = 30; // 30$ value
+            mode = 'subscription'; // Ideally reuse a Price ID for sub
+            break;
+        case 'sub_premium':
+             priceAmount = 9900;
+             productName = "Abonnement Réussite (AI + 80$ Credits)";
+             creditsToAdd = 80;
+             mode = 'subscription';
+             break;
+        case 'credit_50':
+             priceAmount = 5000;
+             productName = "Recharge 50 Crédits";
+             creditsToAdd = 50;
+             break;
+        case 'credit_100':
+             priceAmount = 10000;
+             productName = "Recharge 100 Crédits";
+             creditsToAdd = 100;
+             break;
+        case 'credit_200':
+             priceAmount = 20000;
+             productName = "Recharge 220 Crédits";
+             creditsToAdd = 220; // Bonus
+             break;
+         default: return { error: "Produit inconnu" };
     }
-
-    // Update parent profile
-    const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        include: { parentProfile: true }
-    });
-
-    if (!user?.parentProfile) return { error: "Parent profile not found" };
-
-    const updatedProfile = await prisma.parentProfile.update({
-        where: { id: user.parentProfile.id },
-        data: {
-            hoursBalance: { increment: hoursToAdd }
-        }
-    });
-
-    // Log the transaction
-    await prisma.systemLog.create({
-        data: {
-            level: 'INFO',
-            action: 'PURCHASE_CREDITS',
-            message: `Purchased ${hoursToAdd} hours. New balance: ${updatedProfile.hoursBalance}`,
-            userId: user.id,
-            metadata: { packageId, amount: hoursToAdd }
-        }
-    });
-
-    revalidatePath('/parent/dashboard');
-    revalidatePath('/parent/billing');
     
-    return { success: true, newBalance: updatedProfile.hoursBalance };
+    // Create Stripe Session
+    try {
+        const origin = (await headers()).get('origin') || 'http://localhost:3000';
+        
+        const stripeSession = await stripe.checkout.sessions.create({
+            mode: mode,
+            payment_method_types: ['card'], // Can add 'interac_present' if supported or configured
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'cad',
+                        product_data: {
+                            name: productName,
+                            description: `Ajoute ${creditsToAdd} crédits à votre compte.`,
+                        },
+                        unit_amount: priceAmount,
+                        recurring: mode === 'subscription' ? { interval: 'month' } : undefined,
+                    },
+                    quantity: 1,
+                },
+            ],
+            metadata: {
+                userId: session.user.id,
+                packageId: packageId,
+                creditsToAdd: creditsToAdd.toString(),
+                type: 'CREDIT_TOPUP'
+            },
+            customer_email: session.user.email,
+            success_url: `${origin}/parent/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${origin}/parent/billing?canceled=true`,
+        });
+
+        if (!stripeSession.url) throw new Error("Erreur création session Stripe");
+        
+        // Return URL for frontend redirection
+        return { success: true, url: stripeSession.url };
+
+    } catch (err: any) {
+        console.error("Stripe Error:", err);
+        return { error: "Erreur paiement: " + err.message };
+    }
 }

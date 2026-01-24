@@ -75,6 +75,8 @@ export default async function ParentDashboard() {
 
   // --- SPECIFIC DATA FOR CURRENT STUDENT ---
   
+  const isFreePlan = currentStudent.plan === 'FREE';
+
   // 1. Next Scheduled Session
   const nextSession = await prisma.learningSession.findFirst({
       where: {

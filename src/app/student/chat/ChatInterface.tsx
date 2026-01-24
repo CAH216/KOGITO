@@ -147,8 +147,16 @@ export default function ChatInterface({ sessionId, initialMessages }: { sessionI
         const sentiment = analyzeIdeallySentiment(aiMsg.content);
         setEmotionalState(sentiment);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+        console.error("Chat Error", error);
+        // Error handling for quota
+        if (error.message && error.message.includes("Limite quotidienne")) {
+             setMessages(prev => [...prev, {
+                 id: 'error-' + Date.now(),
+                 role: 'assistant',
+                 content: `⚠️ **Limite Atteinte**\n\n${error.message}\n\n[Passer en Premium](/parent/billing)`
+             }]);
+        }
     } finally {
       setIsLoading(false);
     }

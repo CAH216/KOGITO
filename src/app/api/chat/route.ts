@@ -1,10 +1,11 @@
 import { streamText } from 'ai';
 import { createHuggingFace } from '@ai-sdk/huggingface';
+import { checkAndIncrementQuota, incrementQuotaUsage } from '@/lib/quota-check';
+import { cookies } from 'next/headers';
 
 const hf = createHuggingFace({
   apiKey: process.env.HUGGINGFACE_API_KEY,
 });
-
 
 // Autoriser les edge functions pour une latence minimale
 // export const runtime = 'edge'; // Disabled for debugging on Windows
@@ -23,6 +24,29 @@ RÈGLES D'OR :
 export async function POST(req: Request) {
   try {
     const { messages, tutorProfile } = await req.json();
+
+    // --- QUOTA CHECK ---
+    const cookieStore = await cookies();
+    const studentId = cookieStore.get('currentStudentId')?.value;
+
+    if (studentId) {
+        // 1. Check if allowed
+        const quotaCheck = await checkAndIncrementQuota(studentId, 'CHAT');
+        if (!quotaCheck.allowed) {
+            return new Response(JSON.stringify({ 
+                error: quotaCheck.message,
+                isQuotaError: true
+            }), {
+                status: 402, // Payment Required
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+
+        // 2. Increment usage (Optimistic approach for stream)
+        // Since we are starting the stream, we count it as 1 usage.
+        await incrementQuotaUsage(studentId, 'CHAT');
+    }
+    // -------------------
 
     // Construction du System Prompt personnalisé
     let systemPrompt = BASE_SOCRATIC_PROMPT;
