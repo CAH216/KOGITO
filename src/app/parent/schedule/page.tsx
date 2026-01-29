@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { Calendar, Clock, Video,  User, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import SessionReviewButton from './components/SessionReviewButton';
 
 async function getData() {
     const session = await getServerSession(authOptions);
@@ -32,7 +33,8 @@ async function getData() {
             student: true,
             tutor: {
                 include: { user: true }
-            }
+            },
+            review: true
         },
         orderBy: { startTime: 'asc' }
     });
@@ -177,9 +179,11 @@ function SessionCard({ session, isUpcoming }: { session: any, isUpcoming: boolea
                     </span>
                 )}
                 {!isUpcoming && session.status === 'COMPLETED' && (
-                    <button className="text-sm font-medium text-indigo-600 hover:underline">
-                        Voir le bilan
-                    </button>
+                    <SessionReviewButton 
+                        sessionId={session.id} 
+                        tutorName={session.tutor.user.name} 
+                        existingReview={session.review} 
+                    />
                 )}
             </div>
         </div>

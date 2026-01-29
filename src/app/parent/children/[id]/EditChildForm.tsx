@@ -77,7 +77,7 @@ export function EditChildForm({ student }: { student: any }) {
                     <input 
                         type="text" 
                         name="schoolName" 
-                        defaultValue={student.school?.name || ''}
+                        defaultValue={student.organization?.name || ''}
                         placeholder="Nom de l'établissement" 
                         className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
                     />

@@ -82,26 +82,17 @@ export async function submitTutorApplication(formData: FormData) {
   const hourlyRate = hourlyRateStr ? parseFloat(hourlyRateStr) : 25;
 
   const cvFile = formData.get('cv') as File | null;
-  let cvUrl = null;
+  let cvBuffer: Buffer | null = null;
+  let cvMimeType: string | null = null;
 
   if (cvFile && cvFile.size > 0 && cvFile.name !== 'undefined') {
       try {
-          // Create unique filename
           const bytes = await cvFile.arrayBuffer();
-          const buffer = Buffer.from(bytes);
-          
-          const uploadDir = join(process.cwd(), 'public', 'uploads', 'cvs');
-          await mkdir(uploadDir, { recursive: true });
-          
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-          const extension = cvFile.name.split('.').pop();
-          const filename = `cv-${firstName.toLowerCase()}-${uniqueSuffix}.${extension}`;
-          
-          await writeFile(join(uploadDir, filename), buffer);
-          cvUrl = `/uploads/cvs/${filename}`;
+          cvBuffer = Buffer.from(bytes);
+          cvMimeType = cvFile.type || 'application/pdf'; // Default to PDF if unknown
       } catch (err) {
-          console.error("Error upload CV:", err);
-          await logSystemEvent("CV_UPLOAD_ERROR", `Failed to upload CV for ${email}`, LogLevel.ERROR, { error: String(err) });
+          console.error("Error processing CV:", err);
+          await logSystemEvent("CV_UPLOAD_ERROR", `Failed to process CV for ${email}`, LogLevel.ERROR, { error: String(err) });
       }
   }
 
@@ -132,7 +123,8 @@ export async function submitTutorApplication(formData: FormData) {
               }
           });
 
-          await tx.tutorProfile.create({
+          // Create profile with file data in DB
+          const profile = await tx.tutorProfile.create({
               data: {
                   userId: user.id,
                   bio,
@@ -142,9 +134,20 @@ export async function submitTutorApplication(formData: FormData) {
                   status: TutorStatus.PENDING,
                   isVerified: false,
                   hourlyRate,
-                  cvUrl
+                  cvData: (cvBuffer as any) || undefined,
+                  cvMimeType: cvMimeType || undefined
               }
           });
+          
+          // Update URL to point to API
+          if (cvBuffer) {
+              await tx.tutorProfile.update({
+                  where: { id: profile.id },
+                  data: {
+                      cvUrl: `/api/files/cv/${profile.id}`
+                  }
+              });
+          }
           
           // Log success inside transaction (optional, but ensures consistency if wrapper supported it)
           // Since logSystemEvent is outside tx scope usually (separate connection), we call it slightly after or we could pass tx.
@@ -286,7 +289,7 @@ export async function getTutorDashboardStats(email: string) {
             totalEarnings,
             totalHours: Math.round(totalHours),
             activeStudents: distinctStudents.length,
-            rating: tutor.tutorProfile.rating || 5.0
+            rating: tutor.tutorProfile.rating // Return actual rating (0 if none)
         },
         upcomingSessions: upcomingSessions.map(s => ({
             id: s.id,
@@ -405,7 +408,7 @@ export async function getTutorStudents(email: string) {
                     id: true,
                     name: true,
                     grade: true,
-                    school: { select: { name: true } }
+                    organization: { select: { name: true } }
                 }
             },
             startTime: true // to find last session
@@ -444,6 +447,21 @@ export async function updateTutorProfileSettings(formData: FormData) {
         // fallback
     }
 
+    const cvFile = formData.get('cv') as File | null;
+    let cvBuffer: Buffer | undefined;
+    let cvMimeType: string | undefined;
+
+    if (cvFile && cvFile.size > 0 && cvFile.name !== 'undefined') {
+        try {
+            const bytes = await cvFile.arrayBuffer();
+            cvBuffer = Buffer.from(bytes);
+            cvMimeType = cvFile.type || 'application/pdf';
+        } catch (err) {
+            console.error("Error processing CV in settings:", err);
+            return { error: "Erreur lors de l'upload du CV" };
+        }
+    }
+
     try {
         // First get user to get id
         const user = await prisma.user.findUnique({
@@ -458,7 +476,13 @@ export async function updateTutorProfileSettings(formData: FormData) {
             data: {
                 bio,
                 subjects,
-                hourlyRate
+                hourlyRate,
+                // Update file storage fields if new file provided
+                ...(cvBuffer && { 
+                    cvData: (cvBuffer as any),
+                    cvMimeType: cvMimeType,
+                    cvUrl: `/api/files/cv/${user.tutorProfile.id}` // Ensure URL points to API
+                })
             }
         });
 
@@ -522,7 +546,7 @@ export async function getStudentDetailsForTutor(email: string, studentId: string
     const student = await prisma.student.findUnique({
         where: { id: studentId },
         include: {
-            school: true,
+            organization: true,
             parent: {
                 include: {
                     user: { select: { id: true, name: true, email: true, image: true } }

@@ -52,6 +52,27 @@ export const BADGES: BadgeDefinition[] = [
     description: 'Avoir 5 compétences au niveau maximum.',
     icon: 'Crown',
     condition: (stats) => stats.masteryCount >= 5
+  },
+  {
+    id: 'NIGHT_OWL',
+    name: 'Oiseau de Nuit',
+    description: 'Avoir étudié après 20h.',
+    icon: 'Moon',
+    condition: () => new Date().getHours() >= 20
+  },
+  {
+    id: 'EARLY_BIRD',
+    name: 'Lève-tôt',
+    description: 'Avoir étudié avant 8h du matin.',
+    icon: 'Sun',
+    condition: () => new Date().getHours() < 8 && new Date().getHours() > 4
+  },
+  {
+    id: 'SOCIAL_BUTTERFLY',
+    name: 'Sociable',
+    description: 'Avoir participé à 5 sessions différentes.',
+    icon: 'Users',
+    condition: (stats) => stats.totalSessions >= 5
   }
 ];
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Brain, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -12,8 +13,8 @@ export async function SiteHeader() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-200 group-hover:scale-105 transition-transform">
-                <Brain className="h-6 w-6 text-white" />
+              <div className="relative w-12 h-12 group-hover:scale-105 transition-transform">
+                 <Image src="/brand/kogito-icon.png" alt="Kogito" fill className="object-contain" />
               </div>
               <span className="text-2xl font-extrabold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors">Kogito</span>
             </Link>

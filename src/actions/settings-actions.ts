@@ -74,25 +74,21 @@ export async function updateProfile(formData: FormData) {
     }
 
     let imageUrl = currentUser.image;
+    let imageData: Buffer | undefined;
+    let imageMimeType: string | undefined;
 
     // Handle Image Upload (Denylisted for Parent)
     if (imageFile && imageFile.size > 0) {
         if (currentUser.role === 'PARENT') {
-             // Silently ignore or throw? Requirement says "pas pour parent". 
-             // We can just skip updating image for parent.
+             // Skip
         } else {
-            // For Tutor / Employee / Admin
-            const buffer = Buffer.from(await imageFile.arrayBuffer());
-            const filename = `${uuidv4()}${path.extname(imageFile.name)}`;
-            const uploadDir = path.join(process.cwd(), 'public/uploads/avatars');
+            // Store in DB for reliability as requested
+            imageData = Buffer.from(await imageFile.arrayBuffer());
+            imageMimeType = imageFile.type || 'image/jpeg';
             
-            const fs = require('fs');
-            if (!fs.existsSync(uploadDir)){
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
-
-            await writeFile(path.join(uploadDir, filename), buffer);
-            imageUrl = `/uploads/avatars/${filename}`;
+            // Set URL to API route
+            // Note: We use the ID, but it's the SAME ID, so the URL structure is consistent.
+            imageUrl = `/api/files/avatar/${session.user.id}`;
         }
     }
 
@@ -100,7 +96,8 @@ export async function updateProfile(formData: FormData) {
         where: { id: session.user.id },
         data: {
             name,
-            image: imageUrl
+            image: imageUrl,
+            ...(imageData && { imageData: imageData as any, imageMimeType })
         }
     })
 

@@ -8,9 +8,10 @@ interface Props {
   initialBio: string;
   initialSubjects: string[];
   initialRate: number;
+  initialCvUrl?: string | null;
 }
 
-export default function EditTutorProfileForm({ initialBio, initialSubjects, initialRate }: Props) {
+export default function EditTutorProfileForm({ initialBio, initialSubjects, initialRate, initialCvUrl }: Props) {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [subjects, setSubjects] = useState<string[]>(initialSubjects);
@@ -67,7 +68,7 @@ export default function EditTutorProfileForm({ initialBio, initialSubjects, init
 
                 <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                        Tarif Horaire (€)
+                        Tarif Horaire ($)
                     </label>
                     <div className="relative">
                         <DollarSign size={18} className="absolute left-3 top-3.5 text-slate-400" />
@@ -109,6 +110,34 @@ export default function EditTutorProfileForm({ initialBio, initialSubjects, init
                                 <button type="button" onClick={() => handleRemoveSubject(sub)} className="hover:text-blue-900 font-bold ml-1">×</button>
                              </span>
                         ))}
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Curriculum Vitae (CV)
+                    </label>
+                    <div className="flex flex-col gap-2">
+                        {initialCvUrl && (
+                             <div className="text-sm text-slate-600 flex items-center gap-2 bg-slate-100 p-2 rounded-lg w-fit">
+                                <span className="font-bold">CV Actuel:</span>
+                                <a href={initialCvUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">
+                                    Voir le document
+                                </a>
+                             </div>
+                        )}
+                        <input 
+                            type="file" 
+                            name="cv" 
+                            accept=".pdf,.doc,.docx"
+                            className="block w-full text-sm text-slate-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700
+                            hover:file:bg-blue-100"
+                        />
+                        <p className="text-xs text-slate-500">Formats acceptés: PDF, DOC, DOCX. Max 5MB.</p>
                     </div>
                 </div>
             </div>

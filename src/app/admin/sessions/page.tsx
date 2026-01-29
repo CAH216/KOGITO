@@ -104,7 +104,7 @@ export default function AdminSessionsPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-medium">
-                                            {session.price ? `${session.price} €` : '-'}
+                                            {session.price ? `${session.price} $` : '-'}
                                         </td>
                                     </tr>
                                 ))

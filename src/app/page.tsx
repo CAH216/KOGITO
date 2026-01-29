@@ -88,10 +88,6 @@ export default async function Home() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
             {/* Text Content */}
             <div className="max-w-2xl">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wide mb-6 border border-blue-100">
-                <span className="flex h-2 w-2 rounded-full bg-blue-600 mr-2 animate-pulse"></span>
-                Inscriptions ouvertes 2024-2025
-              </div>
               <h1 className="text-4xl tracking-tight font-extrabold text-slate-900 sm:text-5xl md:text-6xl mb-6 leading-tight">
                 L'excellence scolaire <br/>
                 <span className="text-blue-600">à portée de main.</span>
@@ -256,10 +252,10 @@ export default async function Home() {
                   <p className="text-slate-400 max-w-xl">
                      Du collège au lycée, nous couvrons le programme officiel pour assurer de meilleures notes partout.
                   </p>
+                  <p className="text-slate-500 text-sm mt-2">
+                     * L'élève peut demander l'ajout de matières spécifiques directement via la plateforme.
+                  </p>
                </div>
-               <Link href="/matires" className="hidden md:flex items-center text-blue-400 hover:text-blue-300 font-medium mt-4 md:mt-0">
-                  Voir tout le programme <ArrowRight className="ml-2 w-4 h-4" />
-               </Link>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -279,6 +275,116 @@ export default async function Home() {
                      <p className="text-xs text-slate-400 mt-1">{subject.count}</p>
                   </div>
                ))}
+            </div>
+         </div>
+      </section>
+
+      {/* Pricing Section - ADDED HERE */}
+      <section id="pricing" className="py-24 bg-slate-50 border-t border-slate-200">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+               <h2 className="text-base text-blue-600 font-bold tracking-wide uppercase mb-2">Tarification Simple</h2>
+               <p className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                  Un investissement pour leur avenir.
+               </p>
+               <p className="mt-4 text-slate-500 text-lg">
+                  Commencez gratuitement, payez quand ils progressent. Sans engagement.
+               </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+               {/* Plan 1: Découverte */}
+               <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="mb-4">
+                     <span className="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold mb-4">
+                        Découverte
+                     </span>
+                     <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-black text-slate-900">0$</span>
+                        <span className="text-slate-500 font-medium text-sm">/mois</span>
+                     </div>
+                     <p className="text-slate-500 mt-2 text-sm">Pour tester la plateforme.</p>
+                  </div>
+                  <ul className="space-y-3 mb-8 border-t border-slate-100 pt-6">
+                     <li className="flex items-center text-sm text-slate-600 gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> IA Kogito Limitée</li>
+                     <li className="flex items-center text-sm text-slate-600 gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> Accès aux Tuteurs</li>
+                     <li className="flex items-center text-sm text-slate-600 gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> Visio à la carte</li>
+                  </ul>
+                  <Link href="/auth/register" className="block w-full py-3 rounded-xl border border-slate-200 text-slate-600 font-bold text-center hover:bg-slate-50 transition-colors text-sm">
+                     Explorer
+                  </Link>
+               </div>
+
+               {/* Plan 2: Kogito Solo */}
+               <div className="bg-white p-8 rounded-2xl border border-indigo-100 shadow-sm hover:shadow-indigo-200/50 transition-shadow relative overflow-hidden">
+                  <div className="mb-4">
+                     <span className="inline-block px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold mb-4">
+                        Kogito Solo
+                     </span>
+                     <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-black text-slate-900">19$</span>
+                        <span className="text-slate-500 font-medium text-sm">/mois</span>
+                     </div>
+                     <p className="text-slate-500 mt-2 text-sm">L'IA pour l'aide aux devoirs 24/7.</p>
+                  </div>
+                  <ul className="space-y-3 mb-8 border-t border-slate-100 pt-6">
+                     <li className="flex items-center text-sm text-slate-900 font-medium gap-2"><CheckCircle className="w-4 h-4 text-indigo-500"/> IA Kogito ILLIMITÉE</li>
+                     <li className="flex items-center text-sm text-slate-600 gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> Suivi Personnalisé</li>
+                     <li className="flex items-center text-sm text-slate-400 gap-2"><div className="w-1.5 h-1.5 bg-slate-200 rounded-full"></div> Pas de crédits inclus</li>
+                  </ul>
+                  <Link href="/auth/register" className="block w-full py-3 rounded-xl bg-indigo-50 text-indigo-600 font-bold text-center hover:bg-indigo-100 transition-colors text-sm">
+                     Choisir Solo
+                  </Link>
+               </div>
+
+               {/* Plan 3: Essentiel */}
+               <div className="bg-white p-8 rounded-2xl border-2 border-indigo-600 shadow-xl relative scale-105 z-10">
+                  <div className="absolute top-0 right-0 bg-indigo-600 text-white px-3 py-1 rounded-bl-xl text-[10px] font-bold uppercase tracking-wider">
+                     Recommandé
+                  </div>
+                  <div className="mb-4">
+                     <span className="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold mb-4">
+                        Essentiel
+                     </span>
+                     <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-black text-slate-900">49$</span>
+                        <span className="text-slate-500 font-medium text-sm">/mois</span>
+                     </div>
+                     <p className="text-indigo-600/80 mt-2 text-xs font-bold">
+                        IA Illimitée + 30$ de Crédits inclus.
+                     </p>
+                  </div>
+                  <ul className="space-y-3 mb-8 border-t border-slate-100 pt-6">
+                     <li className="flex items-center text-sm text-slate-900 font-medium gap-2"><CheckCircle className="w-4 h-4 text-indigo-500"/> Tout de Kogito Solo</li>
+                     <li className="flex items-center text-sm text-emerald-600 font-bold gap-2"><Star className="w-4 h-4 fill-current"/> 30$ de Crédits (Cumulables)</li>
+                     <li className="flex items-center text-sm text-slate-600 gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div> Tuteurs Certifiés</li>
+                  </ul>
+                  <Link href="/auth/register" className="block w-full py-3 rounded-xl bg-indigo-600 text-white font-bold text-center hover:bg-indigo-700 transition-colors text-sm shadow-lg shadow-indigo-200">
+                     S'abonner
+                  </Link>
+               </div>
+
+                {/* Plan 4: Réussite */}
+                <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 text-white shadow-lg">
+                  <div className="mb-4">
+                     <span className="inline-block px-3 py-1 rounded-full bg-slate-800 text-emerald-400 text-xs font-bold mb-4">
+                        Réussite
+                     </span>
+                     <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-black text-white">99$</span>
+                        <span className="text-slate-400 font-medium text-sm">/mois</span>
+                     </div>
+                     <p className="text-slate-400 mt-2 text-sm">Pour un suivi intensif.</p>
+                  </div>
+                  <ul className="space-y-3 mb-8 border-t border-slate-800 pt-6">
+                     <li className="flex items-center text-sm text-slate-300 gap-2"><CheckCircle className="w-4 h-4 text-emerald-500"/> IA Kogito Illimitée</li>
+                     <li className="flex items-center text-sm text-emerald-400 font-bold gap-2"><Star className="w-4 h-4 fill-current"/> 80$ de Crédits (~2h)</li>
+                     <li className="flex items-center text-sm text-slate-300 gap-2"><div className="w-1.5 h-1.5 bg-slate-600 rounded-full"></div> Support Prioritaire</li>
+                  </ul>
+                  <Link href="/auth/register" className="block w-full py-3 rounded-xl border border-slate-700 bg-slate-800 text-white font-bold text-center hover:bg-slate-700 transition-colors text-sm">
+                     Choisir Réussite
+                  </Link>
+               </div>
             </div>
          </div>
       </section>

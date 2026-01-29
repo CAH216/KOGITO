@@ -57,7 +57,7 @@ export default async function AdminDashboard() {
     },
     { 
         name: 'Revenu Mensuel', 
-        value: `${statsData?.revenue.value.toFixed(2)} €`, 
+        value: `${statsData?.revenue.value.toFixed(2)} $`, 
         change: `${statsData?.revenue.change.toFixed(1)}%`, 
         type: (statsData?.revenue.change || 0) >= 0 ? 'increase' : 'decrease', 
         icon: DollarSign, 

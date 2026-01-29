@@ -2,7 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { Building2, MapPin, Mail, Phone, Plus } from 'lucide-react';
 
 export default async function EmployeeSchoolsPage() {
-    const schools = await prisma.school.findMany({
+    const schools = await prisma.organization.findMany({
+        where: { type: 'SCHOOL' },
         include: { _count: { select: { students: true, tutors: true } } }
     });
 

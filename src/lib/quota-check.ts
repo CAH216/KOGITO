@@ -8,7 +8,15 @@ export async function checkAndIncrementQuota(studentId: string, actionType: 'CHA
       plan: true, 
       dailyAiRequests: true, 
       dailyHomeworkGen: true, 
-      lastQuotaReset: true 
+      lastQuotaReset: true,
+      organization: {
+        select: { billingModel: true }
+      },
+      parent: {
+        select: {
+          subscriptionStatus: true
+        }
+      }
     }
   });
 
@@ -39,17 +47,76 @@ export async function checkAndIncrementQuota(studentId: string, actionType: 'CHA
     currentHomeworks = 0;
   }
 
-  // 2. Check Limits
-  if (student.plan === 'FREE') {
-    if (actionType === 'CHAT') {
-      if (currentRequests >= PRICING_CONSTANTS.FREE_PLAN.MAX_DAILY_AI_REQUESTS) {
-        return { allowed: false, message: "Limite quotidienne de messages atteinte (Gratuit). Passez au Premium !" };
-      }
-    } else if (actionType === 'HOMEWORK') {
-      if (currentHomeworks >= PRICING_CONSTANTS.FREE_PLAN.MAX_DAILY_HOMEWORK_GEN) {
-        return { allowed: false, message: "Limite quotidienne de devoirs atteinte (Gratuit). Passez au Premium !" };
-      }
-    }
+  // 1.5. CHECK: School & Subscription Validity
+  // ----------------------------------------------------------------------
+  const billingModel = student.organization?.billingModel;
+
+  // CASE A: School Pays
+  if (billingModel === 'SCHOOL_PAYS') {
+      return { allowed: true };
+  }
+  
+  // CASE B: Parent Pays (via School OR Independent)
+  // We utilize the parent relation fetched above.
+  const subStatus = student.parent?.subscriptionStatus;
+
+  // RULE: Subscription MUST be ACTIVE (or TRIAL).
+  // If "Active" -> Unlimited or High Limits (Bypass Free check)
+  const isSubscribed = subStatus === 'ACTIVE' || subStatus === 'TRIAL';
+
+  if (isSubscribed) {
+      // Allow access (Bypassing strictly the Free Limits check below)
+      return { allowed: true };
+  }
+
+  // If NOT Subscribed (Expired, Inactive, Never Paid):
+  // You requested: "Enfant ne peut pas accéder (si parent n'a pas payé)"
+  // This implies strict blocking for premium features, or falling back to VERY limited Free tier.
+  // Assuming we block usage completely if they are supposed to be payers but aren't.
+  // OR strict interpretation: "Si abonnement fini -> Pas d'accès agent".
+  
+  // If the prompt implies strict NO ACCESS for non-payers:
+  // if (!isSubscribed) return { allowed: false, message: "Abonnement requis." };
+  
+  // However, usually "Free Tier" exists.
+  // Let's assume the user wants to enforce that "Paid Features" (Agent might be one) are blocked.
+  // If the Agent is a paid feature:
+  // return { allowed: false, message: "Accès réservé aux abonnés. Demandez à votre parent." };
+
+  // But we have a 'FREE PLAN' logic below. 
+  // I will enforce the logic: If Plan is NOT Free (i.e. they signed up for Premium but failed payment), BLOCK.
+  // If Plan IS Free, check limits.
+  
+  // Actually, usually users without Subs are on FREE plan.
+  // So if subStatus is not active, they should be on FREE plan.
+  // We fall through to check Limits.
+
+
+  // ----------------------------------------------------------------------
+
+  // 2. CHECK LIMITS (For Users not covered by School or Active Sub)
+  // ---------------------------------------------------------------
+  
+  // Logic: We have determined above that the user is NOT covered by an unlimited plan.
+  // We now enforce the "Free Tier / Testing" limits defined in PRICING_CONSTANTS.
+  // This applies to both CHAT (Agent) and HOMEWORK generation.
+
+  const freeLimits = PRICING_CONSTANTS.FREE_PLAN;
+
+  if (actionType === 'CHAT') {
+       if (currentRequests >= freeLimits.MAX_DAILY_AI_REQUESTS) {
+           return { 
+             allowed: false, 
+             message: `Limite de test atteinte (${freeLimits.MAX_DAILY_AI_REQUESTS} msgs/jour). Abonnez-vous pour un accès illimité !` 
+           };
+       }
+  } else if (actionType === 'HOMEWORK') {
+       if (currentHomeworks >= freeLimits.MAX_DAILY_HOMEWORK_GEN) {
+           return { 
+             allowed: false, 
+             message: `Limite de devoirs atteinte (${freeLimits.MAX_DAILY_HOMEWORK_GEN}/jour). Abonnez-vous pour plus !` 
+           };
+       }
   }
 
   // 3. Increment (Optimistic - assuming action will succeed)

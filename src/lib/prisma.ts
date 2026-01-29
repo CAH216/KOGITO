@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 
-const globalForPrisma = global as unknown as { prismaV2: PrismaClient }
+const globalForPrisma = global as unknown as { prismaV3: PrismaClient }
 
 const prismaClientSingleton = () => {
     // Fallback to Render DB if env is missing (for Vercel deployment without env var set)
@@ -12,9 +12,9 @@ const prismaClientSingleton = () => {
     return new PrismaClient({ adapter })
 }
 
-export const prisma = globalForPrisma.prismaV2 || prismaClientSingleton()
+export const prisma = globalForPrisma.prismaV3 || prismaClientSingleton()
 
 if (process.env.NODE_ENV !== 'production') {
   // invalidating cache for HMR
-  globalForPrisma.prismaV2 = prisma;
+  globalForPrisma.prismaV3 = prisma;
 }

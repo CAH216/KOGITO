@@ -1,29 +1,20 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GraphNode, GraphLink, getStudentKnowledgeGraph } from '@/app/actions/graph-actions';
-
-interface KnowledgeGalaxyProps {
-  initialNodes?: GraphNode[];
-  initialLinks?: GraphLink[];
-}
 
 export default function KnowledgeGalaxy() {
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [links, setLinks] = useState<GraphLink[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
-  
-  const router = useRouter();
-  
-  // Dimensions for the Galaxy View
+
+  // Dimensions
   const width = 800;
   const height = 400;
   const centerX = width / 2;
   const centerY = height / 2;
-  const scale = 5; // Zoom factor
+  const scale = 6; 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,127 +33,137 @@ export default function KnowledgeGalaxy() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="h-64 w-full flex items-center justify-center text-blue-400 animate-pulse">Chargement de la Galaxie...</div>;
+  if (loading) return (
+    <div className="h-[400px] w-full flex flex-col items-center justify-center bg-slate-950 rounded-3xl border border-indigo-900/50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+        <p className="text-indigo-300 animate-pulse text-sm">Initialisation de l'univers...</p>
+    </div>
+  );
 
-  // Render Logic
   return (
-    <div className="relative w-full overflow-hidden bg-slate-900 rounded-xl border border-slate-800 shadow-2xl">
-      <div className="absolute top-4 left-4 z-10">
-        <h3 className="text-white font-bold text-lg flex items-center gap-2">
-            <span className="text-yellow-400">✨</span> Ma Galaxie du Savoir
+    <div className="relative w-full overflow-hidden bg-slate-950 rounded-3xl border border-indigo-900/50 shadow-2xl group">
+      
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 animate-pulse"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950/50 to-slate-950"></div>
+      
+      {/* Header Overlay */}
+      <div className="absolute top-6 left-6 z-10 pointer-events-none">
+        <h3 className="text-white font-black text-xl flex items-center gap-2 drop-shadow-md">
+            <span className="text-3xl">🌌</span> 
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-200 to-cyan-200">
+                Galaxie du Savoir
+            </span>
         </h3>
-        <p className="text-slate-400 text-xs">Explore et conquiers de nouvelles connaissances.</p>
+        <p className="text-indigo-400 text-xs font-medium mt-1 ml-11">
+            {nodes.length} planètes découvertes
+        </p>
       </div>
 
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-[400px] cursor-move">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-[400px] cursor-grab active:cursor-grabbing relative z-0">
         <defs>
-            {/* Glow Filter */}
-            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            <radialGradient id="sunGradient">
+                <stop offset="0%" stopColor="#fbbf24" stopOpacity="1" />
+                <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#b45309" stopOpacity="0" />
+            </radialGradient>
+            <filter id="glow">
+                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
             </filter>
         </defs>
 
-        {/* Background Stars (Static) */}
-        {Array.from({ length: 50 }).map((_, i) => (
-             <circle 
-                key={i}
-                cx={Math.random() * width} 
-                cy={Math.random() * height} 
-                r={Math.random() * 1.5} 
-                fill="#ffffff" 
-                opacity={0.3}
-            />
-        ))}
+        {/* Orbit Rings (Decorative) */}
+        <circle cx={centerX} cy={centerY} r={50} fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.2" />
+        <circle cx={centerX} cy={centerY} r={100} fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.1" />
+        <circle cx={centerX} cy={centerY} r={150} fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.05" />
 
-        {/* Links (Edges) */}
-        {links.map((link, i) => {
-            const source = nodes.find(n => n.id === link.source);
-            const target = nodes.find(n => n.id === link.target);
-            if (!source || !target) return null;
+        {/* Central Sun (Kogito Core) */}
+        <motion.circle 
+            cx={centerX} cy={centerY} r={15} 
+            fill="url(#sunGradient)" 
+            filter="url(#glow)"
+            initial={{ scale: 0.8, opacity: 0.8 }}
+            animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
 
-            return (
-                <line 
-                    key={i}
-                    x1={centerX + source.x * scale} 
-                    y1={centerY + source.y * scale} 
-                    x2={centerX + target.x * scale} 
-                    y2={centerY + target.y * scale} 
-                    stroke="#475569" 
-                    strokeWidth="2"
-                    strokeDasharray="4"
-                    opacity={0.6}
-                />
-            );
-        })}
+        {/* Rotating Container for the whole system */}
+        <g transform={`translate(${centerX}, ${centerY})`}>
+            {/* Links */}
+            {links.map((link, i) => {
+                const source = nodes.find(n => n.id === link.source);
+                const target = nodes.find(n => n.id === link.target);
+                if (!source || !target) return null;
 
-        {/* Nodes (Planets) */}
-        {nodes.map((node) => {
-            const isHovered = hoveredNode === node.id;
-            const isLocked = node.status === 'LOCKED';
-            const isMastered = node.status === 'MASTERED';
-            
-            // Adjust interactivity
-            const cx = centerX + node.x * scale;
-            const cy = centerY + node.y * scale;
-            const r = isHovered ? node.val * 1.5 : node.val; // Zoom on hover
+                return (
+                    <motion.line 
+                        key={`link-${i}`}
+                        initial={{ opacity: 0, pathLength: 0 }}
+                        animate={{ opacity: 0.3, pathLength: 1 }}
+                        transition={{ duration: 1, delay: i * 0.05 }}
+                        x1={source.x * scale} 
+                        y1={source.y * scale} 
+                        x2={target.x * scale} 
+                        y2={target.y * scale} 
+                        stroke="#94a3b8" 
+                        strokeWidth="1"
+                    />
+                );
+            })}
 
-            return (
-                <g 
-                    key={node.id} 
-                    onMouseEnter={() => setHoveredNode(node.id)}
-                    onMouseLeave={() => setHoveredNode(null)}
-                    onClick={() => {
-                        if (isLocked) return;
-                        // Trigger Chat Session on this Subject
-                        console.log("Navigating to concept", node.slug);
-                        // router.push(`/student/chat?start=${node.slug}`) // Future implementation
+            {/* Nodes */}
+            {nodes.map((node, i) => (
+                <motion.g
+                    key={node.id}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ 
+                        scale: 1, 
+                        opacity: 1,
+                        x: node.x * scale,
+                        y: node.y * scale 
                     }}
-                    style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                    transition={{ 
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20,
+                        delay: i * 0.1 
+                    }}
+                    whileHover={{ scale: 1.5, zIndex: 10 }}
                 >
-                    {/* Ripple Effect for Mastered/Available nodes */}
-                    {!isLocked && (
-                         <circle cx={cx} cy={cy} r={r + 5} fill={node.color} opacity="0.2">
-                             <animate attributeName="r" from={r} to={r + 10} dur="1.5s" repeatCount="indefinite" />
-                             <animate attributeName="opacity" from="0.3" to="0" dur="1.5s" repeatCount="indefinite" />
-                         </circle>
-                    )}
-
+                    {/* Planet Glow */}
+                    <circle r={node.radius + 4} fill={node.color} opacity="0.2" filter="url(#glow)" />
+                    
+                    {/* Planet Body */}
                     <circle 
-                        cx={cx} 
-                        cy={cy} 
-                        r={r} 
-                        fill={node.color}
-                        stroke={isMastered ? '#ffffff' : 'none'}
-                        strokeWidth="2"
-                        filter={!isLocked ? "url(#glow)" : ""}
-                        style={{ transition: "all 0.3s ease" }}
+                        r={node.radius} 
+                        fill={node.color} 
+                        className="cursor-pointer"
+                        stroke="rgba(255,255,255,0.5)"
+                        strokeWidth="1"
                     />
                     
-                    {/* Node Label (Always show if mastered or hovered) */}
-                    {(isHovered || isMastered) && (
-                        <text 
-                            x={cx} 
-                            y={cy + r + 15} 
-                            textAnchor="middle" 
-                            fill="white" 
-                            fontSize="12"
-                            fontWeight="bold"
-                            className="pointer-events-none drop-shadow-md"
-                        >
+                    {/* Label on Hover */}
+                    <foreignObject x={-50} y={node.radius + 5} width="100" height="40" className="overflow-visible pointer-events-none">
+                        <div className="text-[10px] text-center font-bold text-white bg-slate-900/80 px-2 py-0.5 rounded-full border border-slate-700/50 backdrop-blur-sm whitespace-nowrap w-fit mx-auto shadow-xl">
                             {node.name}
-                        </text>
-                    )}
-                </g>
-            );
-        })}
+                        </div>
+                    </foreignObject>
+                </motion.g>
+            ))}
+        </g>
       </svg>
       
-      {/* Legend */}
-      <div className="absolute bottom-4 right-4 bg-slate-800/80 p-2 rounded text-xs text-white backdrop-blur flex flex-col gap-1">
-          <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-gray-500"></span> Verrouillé</div>
-          <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-400"></span> Disponible</div>
-          <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-yellow-400"></span> Maîtrisé</div>
+      <div className="absolute bottom-4 right-4 flex gap-2">
+         <div className="flex items-center gap-1.5 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-800 text-[10px] text-slate-400">
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div> Maths
+         </div>
+         <div className="flex items-center gap-1.5 bg-slate-900/60 px-3 py-1.5 rounded-full border border-slate-800 text-[10px] text-slate-400">
+            <div className="w-2 h-2 rounded-full bg-emerald-500"></div> SVT
+         </div>
       </div>
     </div>
   );

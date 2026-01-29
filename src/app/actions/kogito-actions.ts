@@ -157,15 +157,84 @@ export async function deleteSessionAction(sessionId: string) {
     await prisma.kogitoMessage.deleteMany({
       where: { sessionId }
     });
-    
+
     await prisma.kogitoSession.delete({
       where: { id: sessionId }
     });
-    
+
     revalidatePath('/student/chat');
     return { success: true };
   } catch (error) {
     console.error("Delete Session Error:", error);
     return { success: false, error: "Failed to delete session" };
   }
+}
+
+export async function requestHumanHelp(sessionId: string) {
+    try {
+        const session = await prisma.kogitoSession.findUnique({
+            where: { id: sessionId },
+            include: { 
+                studentProfile: {
+                    include: {
+                        student: {
+                            include: {
+                                organization: true,
+                                parent: { include: { user: true } }
+                            }
+                        }
+                    }
+                },
+                messages: {
+                    orderBy: { createdAt: 'asc' },
+                    take: 10 // Last 10 messages for context
+                }
+            }
+        });
+
+        if (!session) throw new Error("Session introuvable");
+
+        const student = session.studentProfile.student;
+        const organization = student.organization;
+        
+        if (!organization) {
+             // SCENARIO: Independent Student (No Org, No Supervisor)
+             // Action: Redirect to Tutor Marketplace to find help
+             return { 
+                 success: true, 
+                 action: 'REDIRECT', 
+                 url: '/student/tutors',
+                 message: "Tu n'as pas de tuteur assigné. Je te redirige vers la liste des tuteurs disponibles."
+             };
+        }
+
+        // Target: Organization Admin/Tutor OR Support
+        // For now, we create a SupportTicket linked to the Parent User (owner of account)
+        
+        const history = session.messages.map(m => `[${m.role.toUpperCase()}] ${m.content.substring(0, 100)}...`).join('\n');
+        
+        const ticket = await prisma.supportTicket.create({
+            data: {
+                subject: `🆘 Demande d'aide : ${student.name} (${session.subject})`,
+                description: `
+L'élève ${student.name} demande l'intervention d'un humain.
+Matière : ${session.subject}
+Organisation : ${organization?.name || 'Indépendant'}
+
+DERNIERS ÉCHANGES AVEC L'IA :
+-----------------------------
+${history}
+                `,
+                userId: student.parent.user.id, // Linked to parent account
+                priority: 'HIGH',
+                status: 'OPEN'
+            }
+        });
+
+        return { success: true, action: 'TICKET_CREATED', ticketId: ticket.id };
+
+    } catch (e: any) {
+        console.error("Escalation Error", e);
+        return { success: false, error: e.message };
+    }
 }

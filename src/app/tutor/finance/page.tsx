@@ -30,7 +30,7 @@ export default async function FinancePage() {
                 <Wallet className="w-5 h-5" />
                 <span className="text-sm font-medium">Solde Disponible</span>
             </div>
-            <div className="text-3xl font-bold mb-4">{financials.balance.toFixed(2)} €</div>
+            <div className="text-3xl font-bold mb-4">{financials.balance.toFixed(2)} $</div>
             <button className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white rounded-lg py-2 text-sm font-medium transition-colors">
                 Demander un virement
             </button>
@@ -41,7 +41,7 @@ export default async function FinancePage() {
                 <TrendingUp className="w-5 h-5" />
                 <span className="text-sm font-medium">Revenus Totaux</span>
             </div>
-            <div className="text-3xl font-bold text-slate-900">{financials.totalEarnings.toFixed(2)} €</div>
+            <div className="text-3xl font-bold text-slate-900">{financials.totalEarnings.toFixed(2)} $</div>
             <div className="text-sm text-green-600 mt-2 flex items-center gap-1">
                 +0% <span className="text-slate-400">ce mois</span>
             </div>
@@ -52,7 +52,7 @@ export default async function FinancePage() {
                 <CreditCard className="w-5 h-5" />
                 <span className="text-sm font-medium">Dernier virement</span>
             </div>
-            <div className="text-3xl font-bold text-slate-900">0.00 €</div>
+            <div className="text-3xl font-bold text-slate-900">0.00 $</div>
             <div className="text-sm text-slate-400 mt-2">Aucun virement récent</div>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default async function FinancePage() {
                               <td className="px-4 md:px-6 py-4 font-medium text-slate-900">{tx.student}</td>
                               <td className="hidden md:table-cell px-6 py-4">{tx.subject}</td>
                               <td className="hidden sm:table-cell px-6 py-4">{tx.duration.toFixed(1)}h</td>
-                              <td className="px-4 md:px-6 py-4 text-right font-bold text-slate-900">+{tx.amount.toFixed(2)} €</td>
+                              <td className="px-4 md:px-6 py-4 text-right font-bold text-slate-900">+{tx.amount.toFixed(2)} $</td>
                               <td className="hidden lg:table-cell px-6 py-4 text-center">
                                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                       Payé

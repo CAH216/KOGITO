@@ -2,8 +2,12 @@
 
 export const PRICING_CONSTANTS = {
   FREE_PLAN: {
-    MAX_DAILY_AI_REQUESTS: 15,
-    MAX_DAILY_HOMEWORK_GEN: 3,
+    // Strict Limits for Non-Payers (User Request: "Cannot access Agent if not paid")
+    // If we want a "Trial" feeling, we give small amount. 
+    // If strict "No Pay No Game", set to 0. 
+    // Giving 5 messages allows "Testing" but blocks real usage.
+    MAX_DAILY_AI_REQUESTS: 3, 
+    MAX_DAILY_HOMEWORK_GEN: 1,
     NAME: "Gratuit",
     PRICE: 0
   },

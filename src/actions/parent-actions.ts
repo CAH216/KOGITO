@@ -126,6 +126,18 @@ export async function purchaseCredits(packageId: string) {
             creditsToAdd = 30; // 30$ value
             mode = 'subscription'; // Ideally reuse a Price ID for sub
             break;
+        case 'sub_solo':
+            priceAmount = 1900;
+            productName = "Abonnement Kogito Solo (AI)";
+            creditsToAdd = 0;
+            mode = 'subscription';
+            break;
+        case 'sub_tutoring_only':
+            priceAmount = 3000;
+            productName = "Boost Tuteur (35$ Crédits)";
+            creditsToAdd = 35; // 35$ value for 30$ price
+            mode = 'subscription';
+            break;
         case 'sub_premium':
              priceAmount = 9900;
              productName = "Abonnement Réussite (AI + 80$ Credits)";

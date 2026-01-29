@@ -23,14 +23,14 @@ export default function ContactPage() {
                 <ContactCard 
                     icon={<Mail className="w-6 h-6 text-indigo-600" />}
                     title="Email"
-                    content="support@kogito.ca"
-                    link="mailto:support@kogito.ca"
+                    content="hassanealicamara@gmail.com"
+                    link="mailto:hassanealicamara@gmail.com"
                 />
                 <ContactCard 
                     icon={<Phone className="w-6 h-6 text-emerald-600" />}
                     title="Téléphone"
-                    content="+1 (514) 555-0123"
-                    link="tel:+15145550123"
+                    content="+1 514 261 2005"
+                    link="tel:+15142612005"
                 />
                 <ContactCard 
                     icon={<MapPin className="w-6 h-6 text-red-500" />}

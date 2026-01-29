@@ -43,6 +43,7 @@ export default async function SettingsPage() {
                         initialBio={user.tutorProfile.bio || ''}
                         initialSubjects={user.tutorProfile.subjects}
                         initialRate={user.tutorProfile.hourlyRate || 25}
+                        initialCvUrl={user.tutorProfile.cvUrl}
                   />
               </div>
           )}

@@ -47,7 +47,7 @@ export default async function StudentsPage() {
                      <div className="space-y-2 text-sm">
                          <div className="flex items-center gap-2 text-slate-600">
                              <SchoolIcon size={14} className="text-slate-400" />
-                             {student.school?.name || 'École non renseignée'}
+                             {student.organization?.name || 'École non renseignée'}
                          </div>
                          <div className="flex items-center gap-2 text-slate-600">
                              <Clock size={14} className="text-slate-400" />

@@ -34,7 +34,8 @@ export async function getUserProfiles() {
         id: user.id,
         name: user.name || 'Parent',
         image: user.image,
-        role: user.role
+        role: user.role,
+        balance: user.parentProfile?.hoursBalance || 0 // Added balance
     },
     students: user.parentProfile?.children || []
   };

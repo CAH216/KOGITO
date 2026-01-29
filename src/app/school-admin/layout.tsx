@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -14,7 +15,8 @@ import {
   Bell,
   Menu,
   X,
-  FileBarChart
+  FileBarChart,
+  BrainCircuit
 } from 'lucide-react';
 
 export default function SchoolAdminLayout({
@@ -24,12 +26,15 @@ export default function SchoolAdminLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const navigation = [
     { name: 'Tableau de bord', href: '/school-admin/dashboard', icon: LayoutDashboard },
     { name: 'Élèves', href: '/school-admin/students', icon: Users },
+    { name: 'Parents', href: '/school-admin/parents', icon: Users },
     { name: 'Enseignants / Tuteurs', href: '/school-admin/teachers', icon: GraduationCap },
     { name: 'Classes & Groupes', href: '/school-admin/classes', icon: BookOpen },
+    { name: 'Règles IA & Cerveau', href: '/school-admin/ai-rules', icon: BrainCircuit },
     { name: 'Rapports & Statistiques', href: '/school-admin/reports', icon: FileBarChart },
     { name: 'Paramètres Établissement', href: '/school-admin/settings', icon: Settings },
   ];
@@ -45,7 +50,10 @@ export default function SchoolAdminLayout({
       >
         <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-950">
             <School className="h-6 w-6 text-blue-500 mr-3" />
-            <span className="font-bold text-lg tracking-tight">Portail École</span>
+            <span className="font-bold text-lg tracking-tight">
+              {session?.user?.organizationType === 'AGENCY' ? 'Portail Agence' : 'Portail École'}
+            </span>
+
         </div>
 
         <div className="p-4">
@@ -97,11 +105,11 @@ export default function SchoolAdminLayout({
                 </button>
                 <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
                     <div className="text-right hidden md:block">
-                        <p className="text-sm font-bold text-slate-900">Lycée Montesquieu</p>
+                        <p className="text-sm font-bold text-slate-900">{session?.user?.organizationName || 'Organisation'}</p>
                         <p className="text-xs text-slate-500">Administrateur</p>
                     </div>
                     <div className="h-9 w-9 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm border border-blue-200 uppercase">
-                        LM
+                        {session?.user?.organizationName?.substring(0, 2).toUpperCase() || 'OR'}
                     </div>
                 </div>
             </div>

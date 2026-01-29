@@ -35,7 +35,7 @@ export default function TutorsPage() {
                 rating="5.0"
                 reviews="42"
                 school="Polytechnique"
-                image="https://randomuser.me/api/portraits/women/44.jpg"
+                image="https://images.unsplash.com/photo-1544717305-2782549b5136?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80"
                 hourly="45"
             />
              <TutorCard 
@@ -45,7 +45,7 @@ export default function TutorsPage() {
                 rating="4.9"
                 reviews="28"
                 school="McGill"
-                image="https://randomuser.me/api/portraits/men/32.jpg"
+                image="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80"
                 hourly="40"
             />
              <TutorCard 
@@ -55,7 +55,7 @@ export default function TutorsPage() {
                 rating="5.0"
                 reviews="156"
                 school="Concordia"
-                image="https://randomuser.me/api/portraits/women/68.jpg"
+                image="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=334&q=80"
                 hourly="35"
             />
              <TutorCard 
@@ -65,7 +65,7 @@ export default function TutorsPage() {
                 rating="4.8"
                 reviews="19"
                 school="UdeM"
-                image="https://randomuser.me/api/portraits/men/86.jpg"
+                image="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=334&q=80"
                 hourly="38"
             />
 
@@ -76,7 +76,7 @@ export default function TutorsPage() {
                 rating="5.0"
                 reviews="34"
                 school="UQAM"
-                image="https://randomuser.me/api/portraits/women/22.jpg"
+                image="https://images.unsplash.com/photo-1580894732444-8ecded7900cd?ixlib=rb-1.2.1&auto=format&fit=crop&w=334&q=80"
                 hourly="32"
             />
              <TutorCard 
@@ -86,7 +86,7 @@ export default function TutorsPage() {
                 rating="5.0"
                 reviews="12"
                 school="ETS"
-                image="https://randomuser.me/api/portraits/men/11.jpg"
+                image="https://images.unsplash.com/photo-1600486913747-55e5470d6f40?ixlib=rb-1.2.1&auto=format&fit=crop&w=334&q=80"
                 hourly="50"
             />
              <TutorCard 
@@ -96,17 +96,17 @@ export default function TutorsPage() {
                 rating="4.9"
                 reviews="67"
                 school="UdeM"
-                image="https://randomuser.me/api/portraits/women/90.jpg"
+                image="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=334&q=80"
                 hourly="35"
             />
              <TutorCard 
-                name="Thomas Gagné"
+                name="Thomas Moreau"
                 subject="Histoire"
                 level="Secondaire"
                 rating="4.7"
                 reviews="8"
                 school="Laval"
-                image="https://randomuser.me/api/portraits/men/54.jpg"
+                image="https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=334&q=80"
                 hourly="30"
             />
 

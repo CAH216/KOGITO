@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Brain, Star, LogOut, User } from 'lucide-react';
+import Image from 'next/image';
+import { Star, LogOut, User } from 'lucide-react';
 
 export function StudentNav({ user }: { user?: { name: string, grade?: string, xp?: number } }) {
   const displayName = user?.name || "Élève";
@@ -13,8 +14,13 @@ export function StudentNav({ user }: { user?: { name: string, grade?: string, xp
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Logo Fun */}
         <Link href="/student/dashboard" className="flex items-center gap-3 hover:scale-105 transition-transform">
-          <div className="bg-indigo-600 p-2 rounded-2xl shadow-lg shadow-indigo-200 rotation-3">
-             <Brain className="h-6 w-6 text-white" />
+          <div className="relative h-10 w-10 hover:rotate-12 transition-transform duration-300">
+             <Image 
+                src="/brand/kogito-icon.png" 
+                alt="Kogito" 
+                fill 
+                className="object-contain drop-shadow-md"
+             />
           </div>
           <span className="text-2xl font-black text-indigo-950 tracking-tight">Kogito <span className="text-indigo-600">Kids</span></span>
         </Link>

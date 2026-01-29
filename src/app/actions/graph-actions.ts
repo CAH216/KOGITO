@@ -9,7 +9,7 @@ export interface GraphNode {
   name: string;
   x: number;
   y: number;
-  val: number; // radius
+  radius: number; // Renamed from val to match schema and frontend usage
   color: string;
   status: 'LOCKED' | 'UNLOCKED' | 'MASTERED';
 }
@@ -72,7 +72,7 @@ export async function getStudentKnowledgeGraph() {
       name: n.name,
       x: n.x, 
       y: n.y,
-      val: n.radius,
+      radius: n.radius, // Updated mapping
       color: color,
       status: status
     };

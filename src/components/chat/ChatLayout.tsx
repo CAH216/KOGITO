@@ -24,9 +24,17 @@ export type Conversation = {
     } | undefined;
 };
 
-export default function ChatLayout({ currentUserRole, initialConversations = [] }: { currentUserRole: string, initialConversations?: Conversation[] }) {
+export default function ChatLayout({ 
+    currentUserRole, 
+    initialConversations = [],
+    initialSelectedId 
+}: { 
+    currentUserRole: string, 
+    initialConversations?: Conversation[],
+    initialSelectedId?: string 
+}) {
     const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
-    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(initialSelectedId || null);
     const [loading, setLoading] = useState(initialConversations.length === 0);
     const [isSearching, setIsSearching] = useState(false);
 

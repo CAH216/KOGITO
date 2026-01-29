@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Search } from 'lucide-react';
+import { Search, ArrowLeft } from 'lucide-react'; // Added ArrowLeft
 import TutorCard from './TutorCard';
+import Link from 'next/link'; // Added Link
 
 export default async function StudentTutorsPage() {
   const cookieStore = await cookies();
@@ -20,20 +21,36 @@ export default async function StudentTutorsPage() {
   });
 
   if (!student || !student.parent) {
-      // Handle edge case where student exists but parent link is broken? 
-      // Or just redirect / show error.
-      // Usually shouldn't happen if constraints are correct.
       return <div>Erreur de chargement du profil parent.</div>;
   }
 
+  // WALLED GARDEN LOGIC
+  // If student belongs to an Org, show ONLY Org tutors.
+  const whereClause: any = { status: 'APPROVED' };
+
+  if (student.organizationId) {
+      whereClause.organizationId = student.organizationId;
+  } else {
+      // Public student: Can see independent tutors (OrgId is null)
+      // Or maybe all tutors? For now, let's say independent tutors only
+      // to protect Org tutors from being booked by outside students.
+      whereClause.organizationId = null; 
+  }
+
   const tutors = await prisma.tutorProfile.findMany({
-    where: { status: 'APPROVED' },
+    where: whereClause,
     include: { user: true }
   });
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       
+      <div className="mb-6">
+        <Link href="/student/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-medium transition-colors">
+            <ArrowLeft size={20} /> Retour au tableau de bord
+        </Link>
+      </div>
+
       <div className="mb-10 text-center">
          <h1 className="text-4xl font-black text-indigo-950 mb-4">Trouve ton Super-Prof 🦸‍♂️</h1>
          <p className="text-lg text-slate-500 max-w-2xl mx-auto">

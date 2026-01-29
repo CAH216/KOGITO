@@ -67,7 +67,23 @@ export default async function ChatDashboard() {
         gradient: 'from-indigo-500 to-purple-600',
         description: 'Matière personnalisée'
     }));
-    
+
+  // Calculate Study Time Today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const stats = await prisma.kogitoSession.aggregate({
+      where: {
+          studentProfile: { studentId: currentStudentId },
+          startedAt: { gte: today }
+      },
+      _count: { id: true }
+  });
+
+  // Since we don't have accurate duration in all sessions yet, 
+  // we estimate 15 min per session or use duration if available
+  const estimatedTime = (stats._count.id || 0) * 15;
+
   const displaySubjects = [...SUBJECTS, ...customSubjects];
 
   return (
@@ -106,7 +122,7 @@ export default async function ChatDashboard() {
                  </div>
                  <div>
                     <p className="text-xs text-slate-400 font-bold uppercase">Temps d'étude auj.</p>
-                    <p className="text-xl font-black text-slate-800">45 min</p>
+                    <p className="text-xl font-black text-slate-800">{estimatedTime} min</p>
                  </div>
               </div>
           </div>

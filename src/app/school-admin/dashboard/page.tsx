@@ -1,5 +1,3 @@
-'use client';
-
 import { 
   Users, 
   GraduationCap, 
@@ -12,8 +10,75 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { getSchoolNotifications } from "@/actions/school-reports-actions";
 
-export default function SchoolDashboard() {
+export default async function SchoolDashboard() {
+  const session = await getServerSession(authOptions);
+  
+  // Fetch real data
+  const user = await prisma.user.findUnique({
+      where: { id: session?.user?.id },
+      include: { organization: true }
+  });
+
+  const notifications = user?.organizationId ? await getSchoolNotifications(user.organizationId) : [];
+
+  if (!user?.organization) {
+      return <div className="p-8">Erreur: Organisation non trouvée. Veuillez contacter le support.</div>;
+  }
+
+  const organization = user.organization;
+  const organizationName = organization.name;
+  
+  // 1. Fetch Students Count
+  const studentsCount = await prisma.student.count({
+      where: { organizationId: organization.id }
+  });
+
+  // 2. Fetch Tutors Count
+  const tutorsCount = await prisma.tutorProfile.count({
+      where: { organizationId: organization.id }
+  });
+
+  // 3. Fetch Completed Sessions
+  const completedSessions = await prisma.learningSession.count({
+      where: {
+          student: { organizationId: organization.id },
+          status: 'COMPLETED'
+      }
+  });
+
+  // 4. Analytics: Top Subjects (Aggregation from AI stats)
+  // Since we don't have a direct aggregation yet, let's fetch recent sessions and count in memory for now
+  // In production, use groupBy.
+  const recentAiSessions = await prisma.kogitoSession.findMany({
+      where: {
+          studentProfile: {
+              student: { organizationId: organization.id }
+          }
+      },
+      select: { subject: true },
+      take: 50,
+      orderBy: { startedAt: 'desc' }
+  });
+
+  const subjectCounts: Record<string, number> = {};
+  recentAiSessions.forEach(s => {
+      // Normalize subject
+      const sub = s.subject || 'Général';
+      subjectCounts[sub] = (subjectCounts[sub] || 0) + 1;
+  });
+
+  const topSubjects = Object.entries(subjectCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5) // Top 5
+        .map(([name, count]) => ({ name, count, percentage: Math.round((count / recentAiSessions.length) * 100) }));
+
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
@@ -21,7 +86,7 @@ export default function SchoolDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
            <h1 className="text-2xl font-bold text-slate-900">Vue d&apos;ensemble</h1>
-           <p className="text-slate-500 mt-1">Bienvenue sur votre espace de gestion, Lycée Montesquieu.</p>
+           <p className="text-slate-500 mt-1">Bienvenue sur votre espace de gestion, {organizationName}.</p>
         </div>
         <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-slate-600 bg-white px-3 py-1.5 rounded-md border border-slate-200 shadow-sm">
@@ -38,30 +103,30 @@ export default function SchoolDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
          <StatCard 
             title="Élèves Inscrits" 
-            value="842" 
-            trend="+12%" 
+            value={studentsCount.toString()} 
+            trend="--" 
             trendUp={true} 
             icon={Users} 
             color="blue"
-            description="vs. mois dernier"
+            description="Total"
          />
          <StatCard 
             title="Tuteurs Actifs" 
-            value="35" 
-            trend="+4" 
+            value={tutorsCount.toString()} 
+            trend="--" 
             trendUp={true} 
             icon={GraduationCap} 
             color="emerald"
-            description="Nouveaux ce mois"
+            description="Total"
          />
          <StatCard 
-            title="Heures de cours" 
-            value="1,240h" 
-            trend="+8%" 
+            title="Sessions" 
+            value={completedSessions.toString()} 
+            trend="Completées" 
             trendUp={true} 
             icon={Clock} 
             color="violet"
-            description="Total ce semestre"
+            description="Total"
          />
          <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-xl p-5 text-white shadow-lg shadow-blue-900/20 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -69,7 +134,7 @@ export default function SchoolDashboard() {
             </div>
             <h3 className="text-blue-100 font-medium text-sm mb-1">Code Établissement</h3>
             <div className="flex items-baseline gap-2 mb-4">
-               <span className="text-2xl font-mono font-bold tracking-wider">LM-2026-X8</span>
+               <span className="text-2xl font-mono font-bold tracking-wider">{organization.code || 'NO-CODE'}</span>
             </div>
             <button className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 backdrop-blur-sm">
                <Copy size={16} />
@@ -80,45 +145,39 @@ export default function SchoolDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Main Chart Section (Mock) */}
+          {/* Main Chart Section (Subject Analytics) */}
           <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold text-slate-900">Activité Pédagogique</h3>
-                  <div className="flex gap-2">
-                      <select className="text-sm border-slate-200 rounded-md text-slate-600 focus:ring-blue-500 focus:border-blue-500 bg-slate-50">
-                          <option>7 derniers jours</option>
-                          <option>30 derniers jours</option>
-                      </select>
+                  <div>
+                    <h3 className="font-bold text-slate-900">Activité Pédagogique (Top Sujets)</h3>
+                    <p className="text-xs text-slate-400">Basé sur les conversations IA des élèves</p>
                   </div>
               </div>
               
-              {/* Fake Chart Visual */}
-              <div className="h-64 flex items-end gap-3 justify-between px-2">
-                  {[40, 65, 45, 80, 55, 90, 75, 85, 60, 95, 80, 70].map((h, i) => (
-                      <div key={i} className="w-full bg-slate-50 rounded-t-lg relative group">
-                          <div 
-                            className="bg-blue-600 w-full rounded-t-lg absolute bottom-0 transition-all duration-500 ease-out group-hover:bg-blue-500" 
-                            style={{ height: `${h}%` }}
-                          ></div>
-                          <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs py-1 px-2 rounded pointer-events-none transition-opacity">
-                              {h}h
+              {/* Simple Bar Chart Visualization */}
+              <div className="space-y-5 h-64 overflow-y-auto pr-2">
+                  {topSubjects.length > 0 ? topSubjects.map((subject, i) => (
+                      <div key={i} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                              <span className="font-medium text-slate-700 flex items-center gap-2">
+                                  <span className={`w-3 h-3 rounded-full ${['bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-pink-500', 'bg-emerald-500'][i % 5]}`}></span>
+                                  {subject.name}
+                              </span>
+                              <span className="text-slate-500 font-medium">{subject.count} sessions</span>
+                          </div>
+                          <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                              <div 
+                                style={{ width: `${subject.percentage}%` }} 
+                                className={`h-full rounded-full transition-all duration-1000 ${['bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-pink-500', 'bg-emerald-500'][i % 5]}`}
+                              ></div>
                           </div>
                       </div>
-                  ))}
-              </div>
-              <div className="flex justify-between mt-4 text-xs text-slate-400 font-medium uppercase tracking-wide">
-                  <span>Jan</span>
-                  <span>Fev</span>
-                  <span>Mar</span>
-                  <span>Avr</span>
-                  <span>Mai</span>
-                  <span>Juin</span>
-                  <span>Juil</span>
-                  <span>Aou</span>
-                  <span>Sep</span>
-                  <span>Oct</span>
-                  <span>Nov</span>
-                  <span>Dec</span>
+                  )) : (
+                      <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                           <TrendingUp size={32} className="mb-2 opacity-50"/>
+                           <p>Aucune donnée disponible pour le moment.</p>
+                      </div>
+                  )}
               </div>
           </div>
 
@@ -130,34 +189,30 @@ export default function SchoolDashboard() {
               </div>
               
               <div className="space-y-6">
-                  <ActivityItem 
-                     icon={Users}
-                     color="blue"
-                     title="Nouvelle inscription"
-                     desc="Martin D. (3ème) a rejoint l'établissement"
-                     time="Il y a 2h"
-                  />
-                  <ActivityItem 
-                     icon={AlertCircle}
-                     color="amber"
-                     title="Signalement Absentéisme"
-                     desc="3 élèves absents au cours de soutien Maths"
-                     time="Il y a 5h"
-                  />
-                  <ActivityItem 
-                     icon={CheckCircle}
-                     color="emerald"
-                     title="Tuteur Validé"
-                     desc="Prof. Sarah L. est maintenant active"
-                     time="Hier"
-                  />
-                   <ActivityItem 
-                     icon={GraduationCap}
-                     color="violet"
-                     title="Nouveau groupe créé"
-                     desc="Groupe 'Soutien Physique' ajouté"
-                     time="Hier"
-                  />
+                  {notifications.length > 0 ? (
+                      notifications.map((n: any) => {
+                          const IconComponent = {
+                              'Users': Users,
+                              'Calendar': Calendar,
+                              'GraduationCap': GraduationCap,
+                              'AlertCircle': AlertCircle,
+                              'CheckCircle': CheckCircle
+                          }[n.icon as string] || Users;
+
+                          return (
+                            <ActivityItem 
+                                key={n.id}
+                                icon={IconComponent}
+                                color={n.color}
+                                title={n.title}
+                                desc={n.desc}
+                                time={new Date(n.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            />
+                          );
+                      })
+                  ) : (
+                      <p className="text-sm text-slate-500 text-center py-4">Aucune notification récente.</p>
+                  )}
               </div>
           </div>
 
@@ -167,10 +222,10 @@ export default function SchoolDashboard() {
       <div>
           <h3 className="font-bold text-slate-900 mb-4">Actions Rapides</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <QuickActionCard title="Ajouter un élève" desc="Création manuelle de compte" icon={Users} color="slate" />
-              <QuickActionCard title="Inviter des enseignants" desc="Envoi d'invitations par email" icon={GraduationCap} color="slate" />
-              <QuickActionCard title="Générer un rapport" desc="Statistiques de la semaine" icon={TrendingUp} color="slate" />
-              <QuickActionCard title="Gérer les classes" desc="Modification des groupes" icon={Users} color="slate" />
+              <QuickActionCard title="Configurer le Cerveau" href="/school-admin/ai-rules" desc="Modifier les règles de l'IA" icon={AlertCircle} color="emerald" />
+              <QuickActionCard title="Ajouter un élève" href="/school-admin/students" desc="Création manuelle de compte" icon={Users} color="blue" />
+              <QuickActionCard title="Inviter des enseignants" href="/school-admin/teachers" desc="Envoi d'invitations par email" icon={GraduationCap} color="violet" />
+              <QuickActionCard title="Générer un rapport" href="/school-admin/reports" desc="Statistiques de la semaine" icon={TrendingUp} color="amber" />
           </div>
       </div>
 
@@ -230,14 +285,41 @@ function ActivityItem({ icon: Icon, color, title, desc, time }: any) {
     )
 }
 
-function QuickActionCard({ title, desc }: any) {
-    return (
-        <button className="flex flex-col items-start p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all text-left group">
-            <div className="flex items-center justify-between w-full mb-2">
-                <span className="font-semibold text-slate-800 group-hover:text-blue-700">{title}</span>
-                <ArrowUpRight size={16} className="text-slate-400 group-hover:text-blue-500" />
+function QuickActionCard({ title, desc, href, icon: Icon, color }: any) {
+    const colorClasses = {
+        blue: "text-blue-600 bg-blue-50 group-hover:bg-blue-100",
+        emerald: "text-emerald-600 bg-emerald-50 group-hover:bg-emerald-100",
+        violet: "text-violet-600 bg-violet-50 group-hover:bg-violet-100",
+        amber: "text-amber-600 bg-amber-50 group-hover:bg-amber-100",
+        slate: "text-slate-600 bg-slate-50 group-hover:bg-slate-100",
+    }[color as string] || "text-slate-600 bg-slate-50 group-hover:bg-slate-100";
+
+    const Content = () => (
+        <>
+            <div className="flex items-center justify-between w-full mb-3">
+                <div className={`p-2 rounded-lg transition-colors ${colorClasses}`}>
+                    {Icon ? <Icon size={20} /> : <div className="h-5 w-5 bg-current rounded-full opacity-20" />}
+                </div>
+                <ArrowUpRight size={16} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
             </div>
-            <p className="text-xs text-slate-500">{desc}</p>
+            <div>
+                 <span className="font-semibold text-slate-800 group-hover:text-blue-700 block mb-1">{title}</span>
+                 <p className="text-xs text-slate-500 group-hover:text-slate-600">{desc}</p>
+            </div>
+        </>
+    );
+
+    if (href) {
+        return (
+            <Link href={href} className="flex flex-col items-start p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all text-left group h-full">
+                <Content />
+            </Link>
+        );
+    }
+
+    return (
+        <button className="flex flex-col items-start p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all text-left group h-full w-full">
+            <Content />
         </button>
     )
 }

@@ -6,14 +6,19 @@ import { TutorStatus } from '@prisma/client';
 export interface TutorSearchFilters {
   subject?: string;
   maxPrice?: number;
-  grade?: string; // Not in TutorProfile directly but maybe implied or added later
+  grade?: string;
+  organizationId?: string | null; // Null means "Public Only", Undefined means "All/Default", String means "Specific Org"
 }
 
 export async function searchTutors(filters?: TutorSearchFilters) {
   const whereClause: any = {
     status: TutorStatus.APPROVED,
-    // isVerified: true, // Removed strict verification for now to match Student Page
   };
+
+  if (filters?.organizationId !== undefined) {
+      whereClause.organizationId = filters.organizationId;
+  }
+
 
   if (filters?.subject && filters.subject !== 'all') {
     whereClause.subjects = {

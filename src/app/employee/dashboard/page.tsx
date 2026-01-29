@@ -15,7 +15,7 @@ async function getStats() {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    const [pendingTutors, activeSessions, schoolsCount, recentPendingTutors, recentLogs, verifiedCount] = await Promise.all([
+    const [pendingTutors, activeSessions, organizationsCount, recentPendingTutors, recentLogs, verifiedCount] = await Promise.all([
         prisma.tutorProfile.count({ 
             where: { status: 'PENDING' } 
         }),
@@ -25,7 +25,7 @@ async function getStats() {
                 startTime: { gte: new Date() }
             } 
         }),
-        prisma.school.count(),
+        prisma.organization.count(),
         prisma.tutorProfile.findMany({
             where: { status: 'PENDING' },
             take: 5,
@@ -52,7 +52,7 @@ async function getStats() {
         pendingTutors,
         openTickets: await prisma.supportTicket.count({ where: { status: 'OPEN' } }),
         activeSessions, 
-        schoolsCount,
+        organizationsCount,
         recentPendingTutors,
         recentLogs,
         weeklyGoal: {
@@ -116,9 +116,9 @@ export default async function EmployeeDashboard() {
 
          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow">
              <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">Écoles Partenaires</p>
+                <p className="text-sm font-medium text-slate-500 mb-1">Organisations Partenaires</p>
                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-2xl font-bold text-slate-900">{stats.schoolsCount}</h3>
+                    <h3 className="text-2xl font-bold text-slate-900">{stats.organizationsCount}</h3>
                 </div>
             </div>
              <div className="p-3 bg-indigo-50 rounded-lg">

@@ -53,7 +53,7 @@ export default async function StudentDetailsPage({ params }: Props) {
                     <div className="mt-6 space-y-3 text-left">
                          <div className="flex items-center gap-3 text-sm text-slate-600 p-3 bg-slate-50 rounded-lg">
                              <SchoolIcon size={16} className="text-slate-400" />
-                             <span className="font-medium">{student?.school?.name || 'École non renseignée'}</span>
+                             <span className="font-medium">{student?.organization?.name || 'École non renseignée'}</span>
                          </div>
                     </div>
                 </div>

@@ -2,7 +2,8 @@
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { BADGES } from '@/lib/kogito/badges';
-import { Trophy, Star, Medal, Award, Search, Mountain, Wand2, Crown, Footprints } from 'lucide-react';
+import { Trophy, Star, Medal, Award, Search, Mountain, Wand2, Crown, Footprints, Moon, Sun, Users, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 const ICON_COMPONENTS = {
     Footprints,
@@ -12,7 +13,10 @@ const ICON_COMPONENTS = {
     Crown,
     Star,
     Medal,
-    Award
+    Award,
+    Moon,
+    Sun,
+    Users
 } as any;
 
 export default async function AchievementsPage() {
@@ -32,7 +36,11 @@ export default async function AchievementsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
+    <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in relative">
+        <Link href="/student/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-indigo-600 mb-6 font-medium transition-colors">
+            <ArrowLeft size={20} /> Retour au tableau de bord
+        </Link>
+
         <h1 className="text-3xl font-black text-indigo-950 mb-2">Mes Trophées 🏆</h1>
         <p className="text-slate-500 mb-8">Collectionne les badges en progressant avec Kogito.</p>
 

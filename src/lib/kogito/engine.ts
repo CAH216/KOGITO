@@ -1,7 +1,8 @@
 import { huggingface } from '@ai-sdk/huggingface';
 import { generateText, streamText } from 'ai';
 import { prisma } from '@/lib/prisma';
-import { KogitoContext, CognitiveStep, EmotionalState, KogitoStrategy } from './types';
+import { awardXP, updateMastery } from '@/actions/gamification-actions';
+import { checkBadges } from './badges';
 import { retrieveRelevantMemories, analyzeAndPersistMemories } from './memory';
 import { checkAndIncrementQuota, incrementQuotaUsage } from '@/lib/quota-check';
 
@@ -88,9 +89,7 @@ export async function createKogitoSession(studentId: string, subject: string) {
   return session;
 }
 
-import { checkBadges } from './badges';
 
-// ... existing imports ...
 
 export async function processStudentMessage(
   sessionId: string, 
@@ -103,7 +102,19 @@ export async function processStudentMessage(
     where: { id: sessionId },
     include: {
       studentProfile: {
-         include: { student: true }
+         include: { 
+           student: {
+             include: {
+               organization: {
+                 include: {
+                   aiRules: {
+                     where: { isActive: true }
+                   }
+                 }
+               }
+             }
+           } 
+         }
       },
       messages: {
         orderBy: { createdAt: 'asc' },
@@ -124,6 +135,12 @@ export async function processStudentMessage(
   const memories = await retrieveRelevantMemories(session.studentProfile.id);
   const memoryBlock = memories.length > 0 
     ? `\n### MÉMOIRE LONGUE DURÉE (Notes Pédagogiques):\n${memories.join('\n')}`
+    : '';
+
+  // Retrieve Organization Rules
+  const orgRules = session.studentProfile.student.organization?.aiRules || [];
+  const rulesBlock = orgRules.length > 0
+    ? `\n### RÈGLES DE L'ÉTABLISSEMENT (PRIORITÉ MAXIMALE):\n${orgRules.map((r, i) => `${i+1}. ${r.content}`).join('\n')}`
     : '';
 
   // Save User Message
@@ -150,6 +167,7 @@ export async function processStudentMessage(
     Current Subject: ${session.subject}
     MODE: ${isPrivate ? 'CONFIDENCE / PRIVATE (Be extra reassuring, no judgment, this is a safe space)' : 'STANDARD'}
     ${memoryBlock}
+    ${rulesBlock}
     ${visualContext}
   `;
 
@@ -195,10 +213,26 @@ export async function processStudentMessage(
   // Run asynchronously without awaiting to speed up response
   (async () => {
     try {
+        // Award XP - User interacted (+5 XP)
+        const xpResult = await awardXP(session.studentProfile.studentId, 5, "Interaction Chat");
+
+        // Update Mastery based on subject/topic
+        if (session.messages.length > 2) { // Only after some exchange
+          // Simple logic: Increase mastery of the current topic slightly
+          // In future, use AI to classify "Concept Learned"
+          const conceptSlug = session.topic || session.subject.toLowerCase();
+          await updateMastery(session.studentProfile.studentId, conceptSlug, 2); // +2% mastery per interaction block
+        }
+        
         // Update Memory every 4 messages or if session is long
         if (session.messages.length % 4 === 0) {
             await analyzeAndPersistMemories(sessionId);
         }
+
+        // Check for Badges
+        const currentBadges = (session.studentProfile.badges as string[]) || [];
+        await checkBadges(session.studentProfile.id, currentBadges);
+
     } catch (e) {
         console.error('Background memory update failed', e);
     }

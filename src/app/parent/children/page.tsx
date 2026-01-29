@@ -16,7 +16,7 @@ export default async function ParentChildrenPage() {
         include: {
           children: {
             include: {
-               school: true
+               organization: true
             }
           }
         }
@@ -72,7 +72,7 @@ export default async function ParentChildrenPage() {
                 <div className="space-y-3 mt-6">
                     <div className="flex justify-between text-sm">
                          <span className="text-slate-500">École</span>
-                         <span className="font-medium text-slate-900">{child.school ? child.school.name : 'Non renseignée'}</span>
+                         <span className="font-medium text-slate-900">{child.organization ? child.organization.name : 'Non renseignée'}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                          <span className="text-slate-500">Cours suivis</span>

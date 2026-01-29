@@ -127,10 +127,10 @@ export default async function TutorSearchPage(props: SearchPageProps) {
                                   </div>
                                   <div className="mt-2 sm:mt-0 text-right">
                                       <span className="block text-2xl font-bold text-slate-900">
-                                          {calculateSessionCost(tutor.hourlyRate)}
-                                          <span className="text-sm text-slate-400 font-normal ml-1">Crédits/h</span>
+                                          1
+                                          <span className="text-sm text-slate-400 font-normal ml-1">Crédit/h</span>
                                       </span>
-                                      <span className="text-xs text-slate-400">
+                                      <span className="text-xs text-slate-400 hidden">
                                           (~{(tutor.hourlyRate || 25) * 1.25}$)
                                       </span>
                                   </div>
@@ -152,9 +152,6 @@ export default async function TutorSearchPage(props: SearchPageProps) {
                                   <Link href={`/parent/tutors/${tutor.id}`} className="w-full sm:w-auto bg-slate-900 text-white font-medium py-2.5 px-6 rounded-xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200">
                                       Voir le profil
                                   </Link>
-                                  <button className="w-full sm:w-auto text-slate-600 font-medium py-2.5 px-6 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
-                                      Discuter
-                                  </button>
                               </div>
                           </div>
                       </div>

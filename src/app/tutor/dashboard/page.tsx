@@ -38,10 +38,10 @@ export default async function TutorDashboard() {
   
   // Format stats for display
   const stats = [
-    { title: 'Revenus (Total)', value: `${realStats.totalEarnings.toFixed(2)} €`, change: 'Cumul', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
+    { title: 'Revenus (Total)', value: `${realStats.totalEarnings.toFixed(2)} $`, change: 'Cumul', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
     { title: 'Élèves Actifs', value: realStats.activeStudents.toString(), change: 'Total', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
     { title: 'Heures Enseignées', value: `${realStats.totalHours}h`, change: 'Total', icon: Clock, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { title: 'Note Moyenne', value: `${realStats.rating.toFixed(1)}/5`, change: 'Top 5%', icon: Star, color: 'text-orange-500', bg: 'bg-orange-50' },
+    { title: 'Note Moyenne', value: realStats.rating > 0 ? `${realStats.rating.toFixed(1)}/5` : "Nouveau", change: 'Top 5%', icon: Star, color: 'text-orange-500', bg: 'bg-orange-50' },
   ];
 
   return (

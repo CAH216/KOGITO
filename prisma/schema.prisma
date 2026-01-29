@@ -16,6 +16,17 @@ enum UserRole {
   PARENT
   TUTOR
   SCHOOL_ADMIN
+  TEACHER
+}
+
+enum OrganizationType {
+  SCHOOL
+  AGENCY
+}
+
+enum BillingModel {
+  SCHOOL_PAYS
+  PARENT_PAYS
 }
 
 enum SubscriptionPlan {
@@ -76,6 +87,8 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  imageData     Bytes?      // Stored binary for avatar
+  imageMimeType String?     // e.g. image/png
   password      String?   // Hashed password if using credentials
   role          UserRole  @default(PARENT)
   
@@ -98,6 +111,12 @@ model User {
   
   // Admin/Employee fields
   managedBy     String?   // ID of the Admin who added this Employee
+  
+  // Organization Membership
+  organizationId String?
+  organization   Organization? @relation("OrganizationUsers", fields: [organizationId], references: [id])
+  
+  supervisedGroups ClassGroup[] @relation("ClassSupervisors")
 }
 
 model Account {
@@ -166,6 +185,8 @@ model TutorProfile {
   status         TutorStatus @default(PENDING)
   experience     String?
   cvUrl          String?
+  cvData         Bytes?      // Stored binary for CV
+  cvMimeType     String?     // e.g. application/pdf
   interviewDate  DateTime? // Proposed date for interview
   rating         Float     @default(0.0)
   totalReviews   Int       @default(0)
@@ -174,21 +195,42 @@ model TutorProfile {
   availability   Availability[]
   homeworksGiven Homework[]
 
-  schoolId       String?
-  school         School?   @relation(fields: [schoolId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  reviews        SessionReview[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @default(now()) @updatedAt
+}
+
+model SessionReview {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5
+  comment   String?  @db.Text
+  
+  sessionId String   @unique // One review per session
+  session   LearningSession @relation(fields: [sessionId], references: [id])
+  
+  tutorId   String
+  tutor     TutorProfile @relation(fields: [tutorId], references: [id])
+  
+  // Optionally link specific student/parent
+  
+  createdAt DateTime @default(now())
 }
 
 // Student Model (Child)
 model Student {
   id             String    @id @default(cuid())
   name           String
-  grade          String?   // Classe (6�me, 3�me...)
-  schoolId       String?
-  school         School?   @relation(fields: [schoolId], references: [id])
+  grade          String?   // Classe (6eme, 3eme...)
   
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  
+  groups         ClassGroup[] 
+
   parentId       String
   parent         ParentProfile @relation(fields: [parentId], references: [id], onDelete: Cascade)
   
@@ -252,6 +294,8 @@ model LearningSession {
   
   price          Float?
   notes          String?       @db.Text
+
+  review         SessionReview?
   
   createdAt      DateTime      @default(now())
 }
@@ -281,11 +325,26 @@ model Availability {
   endTime        String       // "17:00"
 }
 
-// School Partnership Model
-model School {
+enum OrganizationStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+// Organization Model (School or Tutoring Agency)
+model Organization {
   id           String    @id @default(cuid())
   name         String
+  type         OrganizationType @default(SCHOOL)
+  status       OrganizationStatus @default(PENDING)
   code         String    @unique // Code Partenaire (ex: KOGITO-LMB-01)
+  
+  billingModel BillingModel @default(SCHOOL_PAYS)
+  
+  logoUrl      String?
+  primaryColor String?   // For White Labeling
+  settings     Json?     // Global AI Rules, Permissions
+  
   address      String?
   city         String?
   contactEmail String?
@@ -293,9 +352,49 @@ model School {
   
   students     Student[]
   tutors       TutorProfile[]
+  users        User[]    @relation("OrganizationUsers")
+
+  groups       ClassGroup[]
+  aiRules      AIInstruction[]
   
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+model ClassGroup {
+  id             String        @id @default(cuid())
+  name           String        // e.g. "Maths 3eme B"
+  
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  students       Student[]
+  supervisors    User[]        @relation("ClassSupervisors")
+  
+  aiRules        AIInstruction[]
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model AIInstruction {
+  id             String    @id @default(cuid())
+  content        String    @db.Text // "Always answer with a Socratic question first."
+  isActive       Boolean   @default(true)
+  
+  // Scope
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  classGroupId   String?
+  classGroup     ClassGroup?   @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+
+  // Context (Optional)
+  subject        String?
+  priority       Int       @default(0) // Higher takes precedence
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 

@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kogito - L'intelligence au service de la réussite scolaire",
   description: "La première plateforme de soutien scolaire hybride : l'alliance parfaite entre IA adaptative et tuteurs experts.",
+  icons: {
+    icon: "/brand/kogito-icon.png",
+    shortcut: "/brand/kogito-icon.png",
+    apple: "/brand/kogito-icon.png",
+  },
 };
 
 export default function RootLayout({

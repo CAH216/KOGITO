@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import bcrypt from 'bcryptjs'
 
 export async function createSchool(formData: FormData) {
   const name = formData.get('name') as string
@@ -20,10 +21,11 @@ export async function createSchool(formData: FormData) {
   const random = Math.floor(1000 + Math.random() * 9000)
   const code = `KOGITO-${cleanName.length > 0 ? cleanName : 'SCH'}-${random}`
 
-  await prisma.school.create({
+  await prisma.organization.create({
     data: {
       name,
       code,
+      type: 'SCHOOL',
       address: address || null,
       contactEmail: contactEmail || null,
       phoneNumber: phoneNumber || null
@@ -35,8 +37,52 @@ export async function createSchool(formData: FormData) {
 }
 
 export async function deleteSchool(id: string) {
-  await prisma.school.delete({
+  await prisma.organization.delete({
     where: { id }
   })
+  revalidatePath('/admin/schools')
+}
+
+export async function updateSchoolStatus(id: string, status: 'ACTIVE' | 'SUSPENDED' | 'PENDING') {
+  await prisma.organization.update({
+    where: { id },
+    data: { status }
+  })
+  revalidatePath('/admin/schools')
+  revalidatePath(`/admin/schools/${id}`)
+}
+
+export async function addSchoolAdmin(formData: FormData) {
+  const organizationId = formData.get('organizationId') as string
+  const name = formData.get('name') as string
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  if (!organizationId || !email || !password || !name) {
+      throw new Error("Missing fields")
+  }
+
+  // Check if user exists
+  const existingUser = await prisma.user.findUnique({
+      where: { email }
+  })
+
+  if (existingUser) {
+      throw new Error("User already exists")
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10)
+
+  await prisma.user.create({
+      data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: 'SCHOOL_ADMIN',
+          organizationId
+      }
+  })
+
+  revalidatePath(`/admin/schools/${organizationId}`)
   revalidatePath('/admin/schools')
 }

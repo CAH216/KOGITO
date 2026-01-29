@@ -4,7 +4,16 @@ import { redirect } from 'next/navigation';
 import { getConversations } from '@/actions/message-actions';
 import ChatLayout from '@/components/chat/ChatLayout';
 
-export default async function MessagesPage() {
+import { startConversation } from '@/actions/message-actions';
+
+interface MessagesPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function MessagesPage(props: MessagesPageProps) {
+    const searchParams = await props.searchParams;
+    const initialConvId = typeof searchParams.id === 'string' ? searchParams.id : undefined;
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) redirect('/auth/login');
 
@@ -19,7 +28,11 @@ export default async function MessagesPage() {
             
             <div className="flex-1 min-h-0">
                 {/* @ts-ignore */}
-                <ChatLayout currentUserRole="PARENT" initialConversations={conversations} />
+                <ChatLayout 
+                    currentUserRole="PARENT" 
+                    initialConversations={conversations} 
+                    initialSelectedId={initialConvId}
+                />
             </div>
         </div>
     );

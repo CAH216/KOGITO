@@ -36,11 +36,24 @@ export const authOptions: NextAuthOptions = {
           },
           include: {
             tutorProfile: true,
+            organization: true, // INCLUDE ORGANIZATION TO CHECK STATUS
           },
         })
 
         if (!user || !user.password) {
           return null
+        }
+
+        // --- SECURITY CHECKS ---
+
+        // 1. Check for School Admin / Agency Admin
+        if (user.role === 'SCHOOL_ADMIN' && user.organization) {
+            if (user.organization.status === 'PENDING') {
+                throw new Error("Votre organisation est en attente de validation par l'administrateur.");
+            }
+            if (user.organization.status === 'SUSPENDED') {
+                 throw new Error("Votre compte organisation a été suspendu.");
+            }
         }
 
         // Vérification du statut tuteur
@@ -67,6 +80,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          organizationName: user.organization?.name,
+          organizationType: user.organization?.type
         }
       },
     }),
@@ -76,6 +91,8 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.organizationName = token.organizationName as string
+        session.user.organizationType = token.organizationType as string
       }
       return session
     },
@@ -83,6 +100,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         token.role = (user as any).role
+        token.organizationName = (user as any).organizationName
+        token.organizationType = (user as any).organizationType
       }
       return token
     },

@@ -277,49 +277,78 @@ export default async function StudentDashboard() {
 
       </div>
 
-      {/* 4. Gamification Progress (Mastery) */}
-      <div className="bg-white rounded-3xl p-6 md:p-8 border border-indigo-50 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                 <Zap className="text-yellow-400 fill-yellow-400" />
-                 Tes Super-Pouvoirs (Maîtrise)
+      {/* 4. Gamification Progress (Mastery) - Super Powers Grid */}
+      <div className="bg-white rounded-3xl p-6 md:p-8 border border-indigo-50 shadow-sm relative overflow-hidden">
+          {/* Decor background */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-400/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+          <div className="flex justify-between items-center mb-6 relative z-10">
+              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                 <div className="bg-yellow-100 p-2 rounded-xl text-yellow-500">
+                    <Zap size={24} className="fill-yellow-500" />
+                 </div>
+                 Tes Super-Pouvoirs
               </h2>
-              <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                {masteryItems.length > 0 ? `${masteryItems.length} Compétences` : 'Niveau 1'}
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Maîtrise ({masteryItems.length})
               </span>
           </div>
           
-          <div className="space-y-6">
-              {masteryItems.length === 0 ? (
-                  // Empty State
-                  <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-300">
-                          <Trophy size={20} />
-                      </div>
-                      <p className="text-slate-500 font-medium">Tes compétences apparaîtront ici.</p>
-                      <p className="text-xs text-slate-400 mt-1">Discute avec Kogito pour les débloquer !</p>
+          {masteryItems.length === 0 ? (
+              // Empty State (Refined)
+              <div className="text-center py-12 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300 transform rotate-12">
+                      <Trophy size={32} />
                   </div>
-              ) : (
-                  // Dynamic Mastery List
-                  masteryItems.map((item) => (
-                    <div key={item.id}>
-                        <div className="flex justify-between text-sm font-bold text-slate-700 mb-2">
-                            <span className="flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${item.level > 80 ? 'bg-emerald-500' : 'bg-indigo-500'}`}></span>
-                                {item.conceptSlug || "Concept inconnu"}
-                            </span>
-                            <span className="text-indigo-600">{item.level}%</span>
+                  <h3 className="font-bold text-slate-700">Pas encore de pouvoirs !</h3>
+                  <p className="text-sm text-slate-500 mt-1 max-w-xs mx-auto">
+                    Discute avec Kogito pour débloquer tes premières cartes de compétence.
+                  </p>
+              </div>
+          ) : (
+              // Super Power Cards Grid
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {masteryItems.map((item) => (
+                    <div key={item.id} className="relative group bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                        {/* Level Badge */}
+                        <div className="absolute top-4 right-4 bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg text-xs font-bold font-mono">
+                            LVL.{Math.floor(item.level / 10)}
                         </div>
-                        <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                            <div 
-                                className={`h-3 rounded-full transition-all duration-1000 ${item.level > 80 ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-gradient-to-r from-indigo-500 to-purple-500'}`}
+
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl shadow-lg
+                                ${item.level >= 80 ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-200' : 
+                                  item.level >= 50 ? 'bg-gradient-to-br from-indigo-400 to-purple-600 shadow-indigo-200' : 
+                                  'bg-gradient-to-br from-slate-400 to-slate-500 shadow-slate-200'}`}>
+                                {item.level >= 80 ? '🌟' : item.level >= 50 ? '⚡' : '🛡️'}
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-800 text-sm text-left">{item.conceptSlug}</h4>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block text-left">
+                                    {item.level >= 80 ? 'Maître' : item.level >= 50 ? 'Avancé' : 'Apprenti'}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        {/* Power Bar */}
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                             <div 
+                                className={`h-full rounded-full transition-all duration-1000 relative overflow-hidden group-hover:animate-pulse
+                                    ${item.level >= 80 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
                                 style={{ width: `${item.level}%` }}
-                            ></div>
+                             >
+                                <div className="absolute top-0 left-0 bottom-0 right-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+                             </div>
+                        </div>
+                        <div className="flex justify-between mt-2 text-[10px] font-bold text-slate-400">
+                             <span>0%</span>
+                             <span className={item.level >= 80 ? 'text-emerald-500' : 'text-indigo-500'}>{item.level}%</span>
+                             <span>100%</span>
                         </div>
                     </div>
-                  ))
-              )}
-          </div>
+                  ))}
+              </div>
+          )}
       </div>
 
     </div>

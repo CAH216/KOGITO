@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Brain, Lock, Mail, Loader2, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
+import { Lock, Mail, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,8 +47,8 @@ export default function LoginPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-6">
             <Link href="/" className="flex items-center gap-2 group">
-                 <div className="bg-blue-600 p-2 rounded-lg shadow-sm group-hover:bg-blue-700 transition-colors">
-                    <Brain className="h-8 w-8 text-white" />
+                 <div className="relative w-16 h-16 group-hover:scale-105 transition-transform">
+                     <Image src="/brand/kogito-icon.png" alt="Kogito" fill className="object-contain" />
                  </div>
                  <span className="text-2xl font-bold text-slate-900 tracking-tight">Kogito</span>
             </Link>
@@ -178,6 +179,19 @@ export default function LoginPage() {
                 Postuler pour devenir tuteur
               </Link>
             </div>
+          </div>
+          <div className="mt-6 flex flex-col items-center gap-3">
+             <div className="relative w-full">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-slate-500">Organisations</span>
+                </div>
+              </div>
+             <Link href="/partners" className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+                 Vous êtes une agence ou une école ?
+             </Link>
           </div>
         </div>
       </div>

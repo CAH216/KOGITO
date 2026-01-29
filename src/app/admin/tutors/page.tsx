@@ -116,7 +116,7 @@ export default function AdminTutorsPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 font-medium">
-                                            {tutor.hourlyRate} €/h
+                                            {tutor.hourlyRate} $/h
                                         </td>
                                         <td className="px-6 py-4 text-slate-600">
                                             {tutor._count.sessions}

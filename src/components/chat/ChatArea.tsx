@@ -9,6 +9,8 @@ import { format } from 'date-fns';
 import { Send, ArrowLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
+import { FormattedMessage } from './FormattedMessage';
+
 interface ChatAreaProps {
     conversationId: string;
     onBack: () => void;
@@ -121,12 +123,12 @@ export function ChatArea({ conversationId, onBack, onMessageSent }: ChatAreaProp
                                      )}
                                 </div>
                             )}
-                            <div className={`relative max-w-[70%] rounded-lg p-3 ${
+                            <div className={`relative max-w-[85%] rounded-lg p-3 ${
                                 isMe 
                                     ? 'bg-indigo-600 text-white rounded-br-none' 
                                     : 'bg-white text-gray-800 shadow-sm border rounded-bl-none'
                             }`}>
-                                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                                <FormattedMessage content={msg.content} />
                                 <span className={`text-[10px] mt-1 block ${isMe ? 'text-indigo-200' : 'text-gray-400'}`}>
                                     {format(new Date(msg.createdAt), 'HH:mm')}
                                 </span>

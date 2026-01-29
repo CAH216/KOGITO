@@ -88,7 +88,7 @@ export default function AdminAnalyticsPage() {
                                     style={{ height: `${(amount / getMax(data.revenueByDay)) * 100}%` }}
                                 >
                                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                        {amount.toFixed(0)} €
+                                        {amount.toFixed(0)} $
                                     </div>
                                 </div>
                                 <div className="text-[10px] text-slate-400 mt-2 rotate-45 origin-left translate-y-2 truncate w-full">

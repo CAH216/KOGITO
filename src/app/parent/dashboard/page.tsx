@@ -131,18 +131,31 @@ export default async function ParentDashboard() {
           </p>
         </div>
         <div className="flex gap-3">
-             <Link 
+            {/* Admin Switcher: Only visible if user is also ADMIN or EMPLOYEE */}
+            {(user.role === 'ADMIN' || user.role === 'EMPLOYEE') && (
+                <Link 
+                    href="/admin"
+                    className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-slate-800 transition-colors border border-slate-700 shadow-sm"
+                >
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    Admin
+                </Link>
+            )}
+
+            <Link 
                 href="/parent/children"
                 className="hidden md:inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition-colors"
             >
                 Gérer les enfants
             </Link>
+            {/* Primary Action Button (Changed from 'Réserver' to general action menu if needed, sticking to Reserve for now as per "useful") */}
             <Link 
                 href="/parent/tutors/search"
                 className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm shadow-indigo-200 transition-all transform hover:-translate-y-0.5"
             >
                 <Plus size={20} />
-                Réserver un cours
+                <span className="hidden sm:inline">Réserver un cours</span>
+                <span className="sm:hidden">Réserver</span>
             </Link>
         </div>
       </div>
@@ -346,11 +359,16 @@ export default async function ParentDashboard() {
                     <div className="bg-emerald-100 p-2 rounded-lg">
                         <Wallet className="w-5 h-5 text-emerald-600" />
                     </div>
-                    <h3 className="font-bold text-slate-900">Solde Tuteur</h3>
+                    <div>
+                        <h3 className="font-bold text-slate-900">Crédit de Cours</h3>
+                        <p className="text-xs text-slate-500 font-medium">Heures disponibles</p>
+                    </div>
                 </div>
                 
                 <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-4xl font-black text-slate-900">{user.parentProfile?.hoursBalance || 0}</span>
+                    <span className="text-4xl font-black text-slate-900">
+                        {Number(user.parentProfile?.hoursBalance || 0).toFixed(2)}
+                    </span>
                     <span className="text-slate-500 font-medium">heures</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-3 mb-2 overflow-hidden">
