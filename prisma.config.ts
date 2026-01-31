@@ -1,7 +1,11 @@
 import { defineConfig } from '@prisma/config';
+import 'dotenv/config';
 
 export default defineConfig({
   datasource: {
-    url: process.env.DATABASE_URL ?? "postgresql://postgres:passer@localhost:5432/kogito"
+    url: process.env.DATABASE_URL
+  },
+  migrations: {
+    seed: 'ts-node --compiler-options {"module":"CommonJS"} prisma/seed.ts'
   }
 });

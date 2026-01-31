@@ -39,17 +39,10 @@ export default function SelectProfilePage() {
       }
 
       // Only PARENT stays here
-      // Check Balance for Parent
-      if (res.user.role === 'PARENT' && (!res.user.balance || res.user.balance <= 0)) {
-           // We might want to allow them to create a student first? 
-           // But the prompt says "parent se connecte et n'a pas encore payé ... dirigé vers facturation".
-           // However, if they have no students, they might need to create one first?
-           // Usually billing comes after student creation?
-           // Let's strictly follow: redirect to billing.
-           router.push('/parent/billing');
-           return;
-      }
-
+      // Logic moved to handleSelectParent: parent should be able to see this screen to choose children
+      // even if they haven't paid.
+      // IF I redirect here immediately, they can never select a student if they have multiple.
+      
       setData(res);
       setLoading(false);
     }
@@ -63,12 +56,8 @@ export default function SelectProfilePage() {
   };
 
   const handleSelectParent = () => {
-    // If balance is 0, it means it's likely a new user or forgot to top up
-    // But requirement says: "quand il se connecte pour la premiere fois et qu'il a un plan gratuit c'est a dire qu'il na pas encore paye il doit etre diriger vers facturation"
-    
-    // We can assume if balance is 0 OR no payment method (too hard to check here), simply check balance.
-    // Better logic: if hoursBalance == 0, go to billing.
-    if (data && data.user.balance <= 0) {
+    // Check balance on selection
+    if (data && (!data.user.balance || data.user.balance <= 0)) {
         router.push('/parent/billing');
     } else {
         router.push('/parent/dashboard');
