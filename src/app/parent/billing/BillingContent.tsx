@@ -282,6 +282,28 @@ export default function BillingContent({ organization, childrenCount }: BillingC
                 </p>
             </div>
 
+            {/* INTERAC PAYMENT INFO */}
+            <div className="bg-blue-50 border border-blue-100 rounded-3xl p-8 max-w-2xl mx-auto text-center">
+                <h3 className="text-lg font-bold text-blue-900 mb-2 flex items-center justify-center gap-2">
+                    <Building2 className="w-5 h-5" />
+                    Paiement par Virement Interac
+                </h3>
+                <p className="text-blue-800 text-sm mb-2">
+                    Vous préférez ne pas utiliser de carte de crédit ?
+                </p>
+                <div className="bg-white px-2 py-4 rounded-xl border border-blue-100 shadow-sm inline-block w-full">
+                    <p className="text-slate-600 text-sm">
+                        Envoyez le montant désiré par virement Interac à ce numéro :
+                    </p>
+                    <p className="text-2xl font-black text-slate-900 my-2 select-all">
+                        514-261-2005
+                    </p>
+                    <p className="text-xs text-slate-500">
+                        Indiquez votre adresse email <strong>({organization?.name ? "compte parent" : "email de connexion"})</strong> dans le message du virement pour que nous puissions créditer votre compte.
+                    </p>
+                </div>
+            </div>
+
             <div className="text-center">
                 <p className="text-slate-400 text-sm">
                     Paiements sécurisés via Stripe. Annulable à tout moment.

@@ -127,11 +127,11 @@ export default async function TutorSearchPage(props: SearchPageProps) {
                                   </div>
                                   <div className="mt-2 sm:mt-0 text-right">
                                       <span className="block text-2xl font-bold text-slate-900">
-                                          1
-                                          <span className="text-sm text-slate-400 font-normal ml-1">Crédit/h</span>
+                                          {calculateSessionCost(tutor.hourlyRate || 35)}
+                                          <span className="text-sm text-slate-400 font-normal ml-1">$</span>
                                       </span>
-                                      <span className="text-xs text-slate-400 hidden">
-                                          (~{(tutor.hourlyRate || 25) * 1.25}$)
+                                      <span className="text-xs text-slate-400">
+                                          / heure
                                       </span>
                                   </div>
                               </div>

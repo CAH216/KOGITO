@@ -11,10 +11,11 @@ export function calculateSessionCost(tutorHourlyRate: number | null, durationHou
     // Cost = 40 * 1.15 = 46 Credits (46$)
     
     // We treat hoursBalance as raw Dollars now.
-    const totalRate = tutorHourlyRate * (1 + PRICING_CONSTANTS.PLATFORM_FEE_PERCENT);
+    const platformFee = Math.max(tutorHourlyRate * PRICING_CONSTANTS.PLATFORM_FEE_PERCENT, 5); // Minimum 5$ fee
+    const totalRate = tutorHourlyRate + platformFee;
     
     // Round to 2 decimals
-    return Math.ceil(totalRate * durationHours * 100) / 100;
+    return Math.ceil(totalRate * 100) / 100 * durationHours;
 }
 
 export function calculateTutorEarnings(tutorHourlyRate: number | null, durationHours: number = 1): number {

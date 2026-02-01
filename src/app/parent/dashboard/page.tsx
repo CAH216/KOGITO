@@ -361,7 +361,7 @@ export default async function ParentDashboard() {
                     </div>
                     <div>
                         <h3 className="font-bold text-slate-900">Crédit de Cours</h3>
-                        <p className="text-xs text-slate-500 font-medium">Heures disponibles</p>
+                        <p className="text-xs text-slate-500 font-medium">Solde disponible</p>
                     </div>
                 </div>
                 
@@ -369,7 +369,7 @@ export default async function ParentDashboard() {
                     <span className="text-4xl font-black text-slate-900">
                         {Number(user.parentProfile?.hoursBalance || 0).toFixed(2)}
                     </span>
-                    <span className="text-slate-500 font-medium">heures</span>
+                    <span className="text-slate-500 font-medium">$</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-3 mb-2 overflow-hidden">
                     <div 
