@@ -67,9 +67,10 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
   useEffect(() => {
     let createdPeer: Peer | null = null;
     let isCancelled = false;
+    let retryTimeout: NodeJS.Timeout | null = null;
 
     // Initialize Peer
-    const initPeer = async () => {
+    const initPeer = async (retryCount = 0) => {
       setStatus('connecting');
 
       const PeerImport = await import('peerjs');
@@ -77,11 +78,20 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
       
       if (isCancelled) return;
 
+      const peerConfig = { 
+        debug: 0,
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:global.stun.twilio.com:3478' }
+            ]
+        }
+      };
+
       // If Host, use deterministic ID. If Guest (Student), use Random ID.
-      // This matches InterviewClient logic exactly.
       const peer = isHost 
-        ? new Peer(`session-${session.id}-host`, { debug: 0 }) 
-        : new Peer({ debug: 0 });
+        ? new Peer(`session-${session.id}-host`, peerConfig) 
+        : new Peer(peerConfig);
 
       createdPeer = peer;
 
@@ -92,7 +102,7 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
         setStatus('idle');
         console.log('My peer ID is: ' + id);
         
-        // Safety Check: Browsers block mediaDevices on insecure (HTTP) contexts (like local IP on mobile)
+        // Safety Check: Browsers block mediaDevices on insecure (HTTP) contexts
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             console.error("MediaDevices API missing. Likely due to insecure context (HTTP).");
             setFatalError("L'accès à la caméra est bloqué par le navigateur. Si vous testez sur mobile via une IP locale, vous devez utiliser le HTTPS ou un tunnel (ex: ngrok).");
@@ -110,7 +120,6 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
              localStreamRef.current = stream;
              if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
-                // Ensure local video is muted to prevent echo
                 localVideoRef.current.muted = true;
              }
              
@@ -121,7 +130,6 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
           })
           .catch((err) => {
              console.error('Failed to get local stream', err);
-             // alert("Impossible d'accéder à la caméra/micro. Vérifiez vos permissions.");
              if (!isCancelled) {
                  setFatalError("Impossible d'accéder à la caméra/micro. Vérifiez vos permissions.");
              }
@@ -133,13 +141,11 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
         if (isCancelled) return;
 
         console.log('Receiving call from:', call.peer);
-        // Clean up retries if we receive a call
         if (connectionRetryRef.current) {
             clearInterval(connectionRetryRef.current);
             connectionRetryRef.current = null;
         }
 
-        // Answer automatically if we have stream, or ask for it
         if (!localStreamRef.current) {
              navigator.mediaDevices.getUserMedia({ video: true, audio: true })
              .then((stream) => {
@@ -165,7 +171,6 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
       peer.on('error', (err: any) => { 
         if (isCancelled) return;
 
-        // Suppress "peer-unavailable" errors from console
         if (err.type === 'peer-unavailable') {
              return; 
         } 
@@ -174,8 +179,16 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
         
         if(err.type === 'unavailable-id') {
             if (isHost) {
-                // If Tutor ID is taken, it implies another tab is open.
-                // We show the error just like InterviewClient.
+                if (retryCount < 3) {
+                    console.log(`ID taken, retrying in 2s... (Attempt ${retryCount + 1}/3)`);
+                    retryTimeout = setTimeout(() => {
+                         if(!isCancelled) {
+                             if (createdPeer) createdPeer.destroy();
+                             initPeer(retryCount + 1);
+                         }
+                    }, 2000);
+                    return; 
+                }
                 setFatalError("Cette session est déjà active dans un autre onglet ou fenêtre. Veuillez fermer l'autre session.");
             }
         }
@@ -199,6 +212,7 @@ export default function SessionRoom({ session, role }: SessionRoomProps) {
 
     return () => {
       isCancelled = true;
+      if (retryTimeout) clearTimeout(retryTimeout);
       if (connectionRetryRef.current) clearInterval(connectionRetryRef.current);
       if (localStreamRef.current) {
          localStreamRef.current.getTracks().forEach(track => track.stop());

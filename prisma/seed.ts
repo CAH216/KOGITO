@@ -187,9 +187,27 @@ async function main() {
       }
   })
 
+  // Create REAL Employee Account
+  const employeePassword = await bcrypt.hash('employe123', 10)
+  const employeeUser = await prisma.user.upsert({
+    where: { email: 'sophie.martin@kogito.com' },
+    update: {
+        password: employeePassword,
+        role: UserRole.EMPLOYEE,
+        name: 'Sophie Martin',
+    },
+    create: {
+      email: 'sophie.martin@kogito.com',
+      name: 'Sophie Martin',
+      password: employeePassword,
+      role: UserRole.EMPLOYEE,
+    }
+  })
+
   console.log('Admin account created:', admin)
   console.log('Parent account created:', parentUser)
   console.log('Tutor account created:', tutorUser)
+  console.log('Employee account created:', employeeUser)
 }
 
 main()

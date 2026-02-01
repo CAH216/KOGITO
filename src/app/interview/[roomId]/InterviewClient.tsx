@@ -51,9 +51,10 @@ export default function InterviewClient({ roomId, displayName, isHost }: Intervi
   useEffect(() => {
     let createdPeer: Peer | null = null;
     let isCancelled = false;
+    let retryTimeout: NodeJS.Timeout | null = null;
 
     // Initialize Peer
-    const initPeer = async () => {
+    const initPeer = async (retryCount = 0) => {
       setStatus('connecting');
 
       const PeerImport = await import('peerjs');
@@ -61,10 +62,20 @@ export default function InterviewClient({ roomId, displayName, isHost }: Intervi
       
       if (isCancelled) return;
 
+      const peerConfig = {
+        debug: 0,
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
+        }
+      };
+
       // If Host, use deterministic ID. If Guest, undefined (random).
       const peer = isHost 
-        ? new Peer(`${roomId}-host`, { debug: 0 }) 
-        : new Peer({ debug: 0 });
+        ? new Peer(`${roomId}-host`, peerConfig) 
+        : new Peer(peerConfig);
 
       createdPeer = peer;
 
@@ -155,6 +166,16 @@ export default function InterviewClient({ roomId, displayName, isHost }: Intervi
         
         if(err.type === 'unavailable-id') {
             if (isHost) {
+                if (retryCount < 3) {
+                     console.log(`ID taken, retrying in 2s... (Attempt ${retryCount + 1}/3)`);
+                     retryTimeout = setTimeout(() => {
+                         if (!isCancelled) {
+                             if (createdPeer) createdPeer.destroy();
+                             initPeer(retryCount + 1);
+                         }
+                     }, 2000);
+                     return;
+                }
                 setFatalError("Cette session est déjà active dans un autre onglet/fenêtre.");
             }
         }
@@ -178,6 +199,7 @@ export default function InterviewClient({ roomId, displayName, isHost }: Intervi
 
     return () => {
       isCancelled = true;
+      if (retryTimeout) clearTimeout(retryTimeout);
       if (connectionRetryRef.current) clearInterval(connectionRetryRef.current);
       if (localStreamRef.current) {
          localStreamRef.current.getTracks().forEach(track => track.stop());

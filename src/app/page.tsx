@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { DemoVideo } from "@/components/site/DemoVideo";
 import { 
   Users, 
   Shield, 
@@ -241,6 +242,39 @@ export default async function Home() {
                </div>
             </div>
          </div>
+      </section>
+
+      {/* DEMO VIDEO SECTION */}
+      <section id="how-it-works" className="py-24 bg-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[500px] h-[500px] bg-purple-50/50 rounded-full blur-3xl" />
+          
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+              <div className="text-center mb-16">
+                  <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase">
+                      Démonstration
+                  </span>
+                  <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                      Découvrez Kogito en action
+                  </h2>
+                  <p className="mt-4 text-xl text-slate-600 max-w-3xl mx-auto">
+                      Voyez comment notre plateforme transforme l'expérience quotidienne des parents et l'apprentissage des enfants.
+                  </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-12 lg:gap-16">
+                  <DemoVideo 
+                      src="/videos/parent.mp4" 
+                      title="Pour les Parents" 
+                      description="Inscription simple, tableau de bord intuitif pour suivre la progression, gestion des enfants et facturation transparente."
+                  />
+                  <DemoVideo 
+                      src="/videos/enfant.mp4" 
+                      title="Pour les Élèves" 
+                      description="Interface ludique, aide aux devoirs instantanée avec l'IA Socratique, et connexion facile avec un tuteur humain."
+                  />
+              </div>
+          </div>
       </section>
 
       {/* Subjects Section */}
